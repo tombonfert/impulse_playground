@@ -15,26 +15,6 @@ import {
     Radio,
 } from 'lucide-react';
 
-const CallToAction = () => {
-    return (
-        <div className="flex flex-col justify-center h-screen items-center">
-            <h2 className="text-3xl md:text-4xl font-semibold text-center mb-6">
-                Start analyzing your measurement data
-            </h2>
-            <p className="text-center mb-6 text-pretty">
-                Follow our documentation to get up and running with Impulse in no time.
-            </p>
-            <Button
-                variant="primary"
-                link="/docs/motivation"
-                size="large"
-                label="Get Started"
-                className="w-full p-4 font-mono md:w-auto bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
-            />
-        </div>
-    );
-};
-
 const Capabilities = () => {
     const capabilities = [
 
@@ -152,22 +132,22 @@ const Hero = () => {
             </p>
 
 
-            <div className="mt-12 flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Button
                     variant="secondary"
                     outline={true}
                     link="/docs/motivation"
                     size="large"
                     label="Motivation"
-                    className="w-full md:w-auto"
+                    className="w-full"
                 />
                 <Button
                     variant="secondary"
                     outline={true}
-                    link="/docs/references"
+                    link="/docs/getting_started"
                     size="large"
-                    label="References"
-                    className="w-full md:w-auto"
+                    label="Get Started"
+                    className="w-full"
                 />
                 <Button
                     variant="secondary"
@@ -175,9 +155,8 @@ const Hero = () => {
                     link="/docs/demo"
                     size="large"
                     label="Demo"
-                    className="w-full md:w-auto"
+                    className="w-full"
                 />
-
             </div>
         </div>
     );
@@ -191,7 +170,6 @@ export default function Home(): JSX.Element {
                     <div className="max-w-screen-lg">
                         <Hero/>
                         <Capabilities/>
-                        <CallToAction/>
                     </div>
                 </div>
             </main>

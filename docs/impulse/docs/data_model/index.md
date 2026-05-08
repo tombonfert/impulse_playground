@@ -4,6 +4,23 @@ title: Data Model
 
 # Data Model
 
+:::caution Prerequisite
+
+The schema described on this page is what Impulse's **default solvers**
+(`DeltaSolver`, `BasicNarrowSolver`, `KeyValueStoreSolver`) expect from your
+silver layer. **Landing your data in this shape during ingest is the
+simplest and most maintainable path** — see the
+[Ingestion guide](ingestion.md).
+
+Advanced deployments with existing data layouts they cannot or do not want
+to reshape can adapt by passing a `SolverConfig` to remap column names, or
+by implementing a custom solver for fundamentally different physical
+layouts. The ingestion guide's
+[last section](ingestion.md#adapting-to-existing-data-layouts) covers the
+tradeoffs.
+
+:::
+
 Impulse operates on Databricks Medallion Architecture.
 
 Bronze data conissts out of the raw measurement files ingested into the lakehouse, which are then processed and transformed into a normalized Silver layer.
@@ -25,7 +42,7 @@ represent measurement data:
 | `container_tags`    | Key-value metadata tags for containers (e.g. `vehicle_key`, `project_id`).             |
 | `channel_metrics`   | Pre-computed statistics per channel (min, max, mean, percentiles, sample count).        |
 | `channel_tags`      | Key-value metadata tags per channel (e.g. `channel_name`, `brand`, `model`).           |
-| `channels`          | Time-series sample data stored as intervals `[tstart, tend)` with a constant value.    |
+| `channels`          | Time-series sample data, either as raw `(timestamp, value)` samples or as run-length-encoded intervals `[tstart, tend)`. |
 
 Channels are selected by querying `channel_tags` (e.g. `channel_name = "Engine RPM"`) rather than by fixed column names.
 This allows the same schema to support arbitrary signal sets across different projects.
