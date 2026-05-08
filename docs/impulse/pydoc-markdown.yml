@@ -11,7 +11,6 @@ loaders:
       - mda_reporting.aggregations.histogram2d
       - mda_reporting.aggregations.stats_aggregator
       - mda_reporting.config.config_parser
-      - mda_query_engine.measurement_db
       - mda_query_engine.analyze.query.query_builder
       - mda_query_engine.analyze.metadata.time_series_expression
       - mda_query_engine.analyze.metadata.tag_expression

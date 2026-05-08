@@ -58,19 +58,6 @@ code and doc updates.
 > resolves `docs_base_path` relative to cwd. Running it from anywhere other
 > than `docs/impulse/` writes the generated files to the wrong location.
 
-### Scope
-
-`pydoc-markdown.yml` lists the modules to scan. Coverage is the curated
-user-facing surface — what `demos/` notebooks and existing reference
-pages import (`Report`, `Page`, `BasicEvent`, `HistogramDuration`,
-config types in `mda_reporting.config`) — plus the production solvers
-(`DeltaSolver`, `BasicNarrowSolver`, `KeyValueStoreSolver`),
-`SolverConfig`, and the `QuerySolver` base class because solver names
-appear in user configs. Internal persistence plumbing, the legacy
-`BlobSolver`, the `InMemorySolver` test fixture, and `_private` symbols
-are excluded. Add a new module to the `loaders.modules` list when you
-introduce another user-facing class.
-
 ### Removing a module
 
 Deleting a module from `loaders.modules` does **not** delete its old `.md`

@@ -41,8 +41,7 @@
           ],
           "label": "mda_query_engine.analyze",
           "type": "category"
-        },
-        "references/api/mda_query_engine/measurement_db"
+        }
       ],
       "label": "mda_query_engine",
       "type": "category"
