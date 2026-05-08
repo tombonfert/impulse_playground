@@ -56,58 +56,12 @@ DUMMY_KEY_VALUE_STORE_CONFIG = {
     },
     "query_engine": {
         "solver": "KeyValueStoreSolver",
-        "project_id": "test_project",
-    },
-}
-
-DUMMY_KEY_VALUE_STORE_CONFIG_WITH_SOLVER_CONFIG = {
-    "source": {
-        "container_tags_table": "mda_demo.silver.concept_entities",
-        "container_metrics_table": "mda_demo.silver.container_metric",
-        "channel_metrics_table": "mda_demo.silver.channel_metric",
-        "channels_uri": "mda_demo.silver.channel_data",
-    },
-    "unity_sink": {
-        "catalog": "test_catalog",
-        "schema": "test_schema",
-        "table_prefix": "test_prefix",
-    },
-    "query_engine": {
-        "solver": "KeyValueStoreSolver",
-        "project_id": "test_project",
         "solver_config": {
-            "container_id_col": "measurement_id",
-            "channel_id_cols": ["measurement_id", "signal_id"],
-            "channel_data_mapping": {
-                "tstart": "t_start",
-                "tend": "t_stop",
-                "value": "val",
-            },
-            "container_meta_data_mapping": {
-                "project_id": "project",
-            },
+            "project_id": "test_project",
         },
     },
 }
 
-DUMMY_KEY_VALUE_STORE_CONFIG = {
-    "source": {
-        "container_tags_table": "mda_demo.silver.concept_entities",
-        "container_metrics_table": "mda_demo.silver.container_metric",
-        "channel_metrics_table": "mda_demo.silver.channel_metric",
-        "channels_uri": "mda_demo.silver.channel_data",
-    },
-    "unity_sink": {
-        "catalog": "test_catalog",
-        "schema": "test_schema",
-        "table_prefix": "test_prefix",
-    },
-    "query_engine": {
-        "solver": "KeyValueStoreSolver",
-        "project_id": "test_project",
-    },
-}
-
 DUMMY_KEY_VALUE_STORE_CONFIG_WITH_SOLVER_CONFIG = {
     "source": {
         "container_tags_table": "mda_demo.silver.concept_entities",
@@ -122,17 +76,19 @@ DUMMY_KEY_VALUE_STORE_CONFIG_WITH_SOLVER_CONFIG = {
     },
     "query_engine": {
         "solver": "KeyValueStoreSolver",
-        "project_id": "test_project",
         "solver_config": {
-            "container_id_col": "measurement_id",
-            "channel_id_cols": ["measurement_id", "signal_id"],
-            "channel_data_mapping": {
-                "tstart": "t_start",
-                "tend": "t_stop",
-                "value": "val",
+            "project_id": "test_project",
+            "container_tags": {
+                "column_name_mapping": {"project": "project_id"},
             },
-            "container_meta_data_mapping": {
-                "project_id": "project",
+            "channels": {
+                "column_name_mapping": {
+                    "measurement_id": "container_id",
+                    "signal_id": "channel_id",
+                    "t_start": "tstart",
+                    "t_stop": "tend",
+                    "val": "value",
+                },
             },
         },
     },
@@ -267,19 +223,18 @@ def test_create_solver_key_value_store_with_solver_config():
     solver = report.get_solver()
 
     assert isinstance(solver, KeyValueStoreSolver)
-    assert solver.config.container_id_col == "measurement_id"
-    assert solver.config.channel_id_cols == ["measurement_id", "signal_id"]
-    assert solver.config.tstart_col == "t_start"
-    assert solver.config.tend_col == "t_stop"
-    assert solver.config.value_col == "val"
-    assert solver.config.project_id_col == "project"
+    assert solver.config.container_id_col == "container_id"
+    assert solver.config.channel_id_cols == ["container_id", "channel_id"]
+    assert solver.config.tstart_col == "tstart"
+    assert solver.config.tend_col == "tend"
+    assert solver.config.value_col == "value"
+    assert solver.config.project_id_col == "project_id"
 
 
 class TestValidateAggregationEvents:
     """Tests for _validate_aggregation_events method."""
 
     def test_statistics_event_not_registered_raises_error(self):
-        """Test that using an event in Statistics without registering it raises ValueError."""
         report: Report = Report(
             name="my_report",
             spark=None,
@@ -287,11 +242,9 @@ class TestValidateAggregationEvents:
             config=DUMMY_CONFIG,
         )
 
-        # Create a time series expression and event
         ts_expr = TimeSeriesSelector(TagSelector("name") == "test_signal")
         event = BasicEvent(name="test_event", expr=ts_expr > 0)
 
-        # Create StatsAggregator with an event but don't add the event to the report
         stats = StatsAggregator(
             name="test_stats",
             input_expressions=[ts_expr],
@@ -304,7 +257,6 @@ class TestValidateAggregationEvents:
         page.add_aggregation(stats)
         report.add_page(page)
 
-        # Should raise ValueError because event is not registered
         with pytest.raises(ValueError) as exc_info:
             report._validate_aggregation_events()
 
@@ -313,7 +265,6 @@ class TestValidateAggregationEvents:
         assert "not added to the report" in str(exc_info.value)
 
     def test_histogram_event_not_registered_raises_error(self):
-        """Test that using an event in Histogram without registering it raises ValueError."""
         report: Report = Report(
             name="my_report",
             spark=None,
@@ -321,11 +272,9 @@ class TestValidateAggregationEvents:
             config=DUMMY_CONFIG,
         )
 
-        # Create a time series expression and event
         ts_expr = TimeSeriesSelector(TagSelector("name") == "test_signal")
         event = BasicEvent(name="histogram_event", expr=ts_expr > 0)
 
-        # Create Histogram with an event but don't add the event to the report
         hist = HistogramDuration(
             name="test_histogram",
             base_expr=ts_expr,
@@ -337,7 +286,6 @@ class TestValidateAggregationEvents:
         page.add_aggregation(hist)
         report.add_page(page)
 
-        # Should raise ValueError because event is not registered
         with pytest.raises(ValueError) as exc_info:
             report._validate_aggregation_events()
 
@@ -345,7 +293,6 @@ class TestValidateAggregationEvents:
         assert "test_histogram" in str(exc_info.value)
 
     def test_histogram2d_event_not_registered_raises_error(self):
-        """Test that using an event in Histogram2D without registering it raises ValueError."""
         report: Report = Report(
             name="my_report",
             spark=None,
@@ -353,12 +300,10 @@ class TestValidateAggregationEvents:
             config=DUMMY_CONFIG,
         )
 
-        # Create time series expressions and event
         x_expr = TimeSeriesSelector(TagSelector("name") == "x_signal")
         y_expr = TimeSeriesSelector(TagSelector("name") == "y_signal")
         event = BasicEvent(name="hist2d_event", expr=x_expr > 0)
 
-        # Create Histogram2D with an event but don't add the event to the report
         hist2d = Histogram2DDuration(
             name="test_histogram2d",
             x_expr=x_expr,
@@ -372,7 +317,6 @@ class TestValidateAggregationEvents:
         page.add_aggregation(hist2d)
         report.add_page(page)
 
-        # Should raise ValueError because event is not registered
         with pytest.raises(ValueError) as exc_info:
             report._validate_aggregation_events()
 
@@ -380,7 +324,6 @@ class TestValidateAggregationEvents:
         assert "test_histogram2d" in str(exc_info.value)
 
     def test_registered_event_passes_validation(self):
-        """Test that properly registered events pass validation."""
         report: Report = Report(
             name="my_report",
             spark=None,
@@ -388,14 +331,11 @@ class TestValidateAggregationEvents:
             config=DUMMY_CONFIG,
         )
 
-        # Create a time series expression and event
         ts_expr = TimeSeriesSelector(TagSelector("name") == "test_signal")
         event = BasicEvent(name="registered_event", expr=ts_expr > 0)
 
-        # Add the event to the report
         report.add_event(event)
 
-        # Create StatsAggregator with the registered event
         stats = StatsAggregator(
             name="test_stats",
             input_expressions=[ts_expr],
@@ -408,11 +348,9 @@ class TestValidateAggregationEvents:
         page.add_aggregation(stats)
         report.add_page(page)
 
-        # Should not raise any error
         report._validate_aggregation_events()
 
     def test_histogram_without_event_passes_validation(self):
-        """Test that Histogram without an event passes validation."""
         report: Report = Report(
             name="my_report",
             spark=None,
@@ -420,10 +358,8 @@ class TestValidateAggregationEvents:
             config=DUMMY_CONFIG,
         )
 
-        # Create a time series expression
         ts_expr = TimeSeriesSelector(TagSelector("name") == "test_signal")
 
-        # Create Histogram without an event
         hist = HistogramDuration(
             name="test_histogram",
             base_expr=ts_expr,
@@ -434,11 +370,9 @@ class TestValidateAggregationEvents:
         page.add_aggregation(hist)
         report.add_page(page)
 
-        # Should not raise any error
         report._validate_aggregation_events()
 
     def test_multiple_aggregations_with_unregistered_event_lists_all(self):
-        """Test that error message lists all aggregations with unregistered events."""
         report: Report = Report(
             name="my_report",
             spark=None,
@@ -446,13 +380,11 @@ class TestValidateAggregationEvents:
             config=DUMMY_CONFIG,
         )
 
-        # Create expressions and events
         ts_expr1 = TimeSeriesSelector(TagSelector("name") == "signal1")
         ts_expr2 = TimeSeriesSelector(TagSelector("name") == "signal2")
         event1 = BasicEvent(name="event1", expr=ts_expr1 > 0)
         event2 = BasicEvent(name="event2", expr=ts_expr2 > 0)
 
-        # Create two StatsAggregators with different unregistered events
         stats1 = StatsAggregator(
             name="stats1",
             input_expressions=[ts_expr1],
@@ -473,7 +405,6 @@ class TestValidateAggregationEvents:
         page.add_aggregation(stats2)
         report.add_page(page)
 
-        # Should raise ValueError listing both issues
         with pytest.raises(ValueError) as exc_info:
             report._validate_aggregation_events()
 
@@ -484,7 +415,6 @@ class TestValidateAggregationEvents:
         assert "stats2" in error_msg
 
     def test_same_event_used_in_multiple_aggregations(self):
-        """Test that the same event can be used in multiple aggregations when registered."""
         report: Report = Report(
             name="my_report",
             spark=None,
@@ -492,14 +422,11 @@ class TestValidateAggregationEvents:
             config=DUMMY_CONFIG,
         )
 
-        # Create expressions and shared event
         ts_expr = TimeSeriesSelector(TagSelector("name") == "test_signal")
         shared_event = BasicEvent(name="shared_event", expr=ts_expr > 0)
 
-        # Register the event
         report.add_event(shared_event)
 
-        # Create multiple aggregations using the same event
         stats = StatsAggregator(
             name="test_stats",
             input_expressions=[ts_expr],
@@ -519,5 +446,4 @@ class TestValidateAggregationEvents:
         page.add_aggregation(hist)
         report.add_page(page)
 
-        # Should not raise any error
         report._validate_aggregation_events()
