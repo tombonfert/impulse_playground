@@ -35,38 +35,3 @@ http://localhost:3000
 ```
 
 The site will automatically reload when you make changes to the source files.
-
-## Regenerating the API reference
-
-The pages under `docs/references/api/` are auto-generated from the NumPy-style
-docstrings in `src/` using [pydoc-markdown](https://niklasrosenstein.github.io/pydoc-markdown/).
-The configuration lives at [`pydoc-markdown.yml`](./pydoc-markdown.yml) next to
-this README.
-
-Regenerate after any change to a documented public API. Run from this
-directory (`docs/impulse/`):
-
-```bash
-uv --project ../.. run pydoc-markdown
-```
-
-This rewrites the `.md` files under `docs/references/api/` in place. Commit
-the regenerated files alongside the source change so PR diffs show both the
-code and doc updates.
-
-> The working directory matters — pydoc-markdown's Docusaurus renderer
-> resolves `docs_base_path` relative to cwd. Running it from anywhere other
-> than `docs/impulse/` writes the generated files to the wrong location.
-
-### Removing a module
-
-Deleting a module from `loaders.modules` does **not** delete its old `.md`
-file from `docs/references/api/`. Remove the stale file by hand and commit
-the deletion.
-
-### Why it isn't a build step
-
-The generated `.md` files are committed to git (rather than produced fresh on
-every Docusaurus build) so reviewers can see doc changes in PR diffs. There is
-no Python step in the JS docs build — `npm run build` just reads the committed
-files.
