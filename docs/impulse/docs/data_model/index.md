@@ -33,8 +33,7 @@ All layers are stored as Delta tables in Unity Catalog, which makes them easy to
 
 ## Silver Layer (Input)
 
-The Silver layer uses a **tag-based model** where metadata is separated from time-series data. Five tables
-represent measurement data:
+The Silver layer uses a **tag-based model** where metadata is separated from time-series data. Three tables are required (`container_metrics`, `channel_metrics`, `channels`); two optional tag tables (`container_tags`, `channel_tags`) carry contextual metadata used by the channel selection API.
 
 | Table               | Purpose                                                                                |
 |---------------------|----------------------------------------------------------------------------------------|
@@ -48,6 +47,7 @@ Channels are selected by querying `channel_tags` (e.g. `channel_name = "Engine R
 This allows the same schema to support arbitrary signal sets across different projects.
 
 See the [Silver Layer ER Diagram](silver_layer_schema.md) for table relationships.
+For background on the design, see the [Databricks blog post on revolutionizing car measurement data storage and analysis](https://www.databricks.com/blog/revolutionizing-car-measurement-data-storage-and-analysis-mercedes-benzs-petabyte-scale).
 
 ---
 

@@ -5,13 +5,16 @@ title: Ingestion
 
 # Ingestion
 
-Impulse's default solvers read from a silver layer composed of five tables
-— `container_metrics`, `container_tags`, `channel_metrics`, `channel_tags`,
-and `channels` — with the relationships described on the
+Impulse's default solvers read from a silver layer composed of a minimum of
+three tables: `container_metrics`, `channel_metrics`, and `channels`. Two
+additional tables, `container_tags` and `channel_tags`, are optional but
+strongly recommended. They carry the contextual metadata that the
+user-facing channel selection API (`query.channel(channel_name="Engine_RPM")`)
+and tag-based container filtering rely on. The full schema is on the
 [Silver Layer ER Diagram](silver_layer_schema.md). This page is for engineers
-who already have measurement data — in CSV, MDF4, a vendor-specific binary,
-or already in Delta but in a different shape — and need a starting point for
-landing it in that layout.
+who already have measurement data (CSV, MDF4, a vendor-specific binary, or
+Delta with a different shape) and need a starting point for landing it in
+that layout.
 
 Impulse does not ship an ingestion component. The library reads from the
 silver layer; producing it is your responsibility. **Landing your data in
@@ -19,6 +22,17 @@ the shape below during ingest is the simplest path.** If reshaping is
 impractical for your situation, see
 [Adapting to existing data layouts](#adapting-to-existing-data-layouts) at
 the bottom of this page.
+
+:::tip Column-name mapping
+
+If your data already lives in Delta with different physical column names
+than the contract below, you do not need to rewrite it. Impulse supports a
+per-table physical-to-internal column-name mapping for every silver table
+via `SolverConfig`. See
+[Column-name remapping with `SolverConfig`](#column-name-remapping-with-solverconfig)
+below.
+
+:::
 
 ---
 
@@ -133,6 +147,10 @@ multiple files (e.g. one CSV per signal), reshape during decode so each
 container's samples land in `channels` together.
 
 ### MDF4 (ASAM)
+
+A Databricks solutions accelerator for ingesting raw MDF4 data into the
+silver-layer model is in preparation. The pattern below describes the
+underlying approach.
 
 Decode each file with [asammdf](https://github.com/danielhrisca/asammdf) in
 a Spark UDF. For each numeric channel, emit
