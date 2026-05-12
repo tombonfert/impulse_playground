@@ -23,7 +23,7 @@ tradeoffs.
 
 Impulse operates on Databricks Medallion Architecture.
 
-Bronze data conissts out of the raw measurement files ingested into the lakehouse, which are then processed and transformed into a normalized Silver layer.
+Raw measurement files are ingested into the lakehouse in the bronze layer. These are then processed and transformed into a normalized Silver layer.
 Gold Layer contains the final analytics results in a star schema optimized for querying and reporting.
 
 All layers are stored as Delta tables in Unity Catalog, which makes them easy to govern, secure, and queryable by various personas across the organization.

@@ -35,7 +35,7 @@ Initialize a HistogramDuration object.
 - `bins` (`list of float`): List of bin edges for the histogram duration.
 - `event` (`Event`): Optional event to filter the base expression.
 - `desc` (`str`): Description of the histogram duration.
-- `agg_type` (`str`): Type of aggregation, defaults to "NA".
+- `agg_type` (`str`): Type of aggregation, defaults to "histogram_duration".
 - `channel_name` (`str`): Name of the signal associated with the histogram duration.
 - `values_unit` (`str`): Unit of the histogram duration values.
 - `bins_unit` (`str`): Unit of the histogram duration bins.
@@ -80,7 +80,7 @@ Initialize a HistogramCustomWeights object.
 - `bins` (`list of float`): List of bin edges for the histogram.
 - `event` (`Event`): Optional event to filter the base expression.
 - `desc` (`str`): Description of the histogram.
-- `agg_type` (`str`): Type of aggregation, defaults to "histogram_custom_weight".
+- `agg_type` (`str`): Type of aggregation, defaults to "histogram_custom_weights".
 - `channel_name` (`str`): Name of the signal associated with the histogram.
 - `weights_channel_name` (`str`): Name of the weights signal associated with the histogram.
 - `values_unit` (`str`): Unit of the histogram values.
