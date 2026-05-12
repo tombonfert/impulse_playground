@@ -1,20 +1,21 @@
 ---
-sidebar_position: 6
-title: Tutorial — Reporting walkthrough
+sidebar_position: 1
+sidebar_label: Reporting
+title: Reporting walkthrough
 ---
 
-# Tutorial — Reporting walkthrough
+# Reporting walkthrough
 
 This guide walks through the `demos/reporting_pipeline.ipynb` notebook step by step. It covers the full workflow:
 configuring a report, defining signals and events, adding aggregations, computing results, and inspecting the output
 tables.
 
-If you have not run Impulse before, start with [Getting Started](./getting_started.md) — it covers install, demo-data
+If you have not run Impulse before, start with [Getting Started](../getting_started.md) — it covers install, demo-data
 upload, and a minimal one-event, one-histogram report. This page picks up from there with a richer example.
 
 ## Prerequisites
 
-- Completed [Getting Started](./getting_started.md) — Impulse installed, demo CSVs loaded as silver-layer Delta tables.
+- Completed [Getting Started](../getting_started.md) — Impulse installed, demo CSVs loaded as silver-layer Delta tables.
 - A configuration file at `./config/config.json` relative to the notebook (included in the `demos/config/` directory).
 
 ## Configuration
@@ -365,4 +366,4 @@ After running the notebook, the following tables are created in Unity Catalog un
 | `t_stats_aggregator_dimension` | Statistics metadata (3 stats aggregations).                  |
 | `t_stats_aggregator_fact`      | Statistics values per signal, event instance, and container. |
 
-See the [Data Model](./data_model) for complete schema details.
+See the [Data Model](../data_model) for complete schema details.

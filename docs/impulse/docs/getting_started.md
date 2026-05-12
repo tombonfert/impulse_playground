@@ -11,7 +11,7 @@ a one-event, one-histogram report end-to-end in about five minutes.
 
 For a deeper walkthrough that uses three events, both 1D and 2D histograms,
 and multiple statistics aggregators, continue with the
-[Tutorial](./demo.md) after finishing this page.
+[Tutorial](tutorial/demo.md) after finishing this page.
 
 ---
 
@@ -21,7 +21,7 @@ and multiple statistics aggregators, continue with the
 - Permission to create a schema in a catalog you can write to (or an
   existing catalog/schema with write access).
 
-This page uses pre-shaped demo data; no ingestion work is required.
+This demo uses pre-shaped data; no ingestion work is required.
 For your own data, see [Ingestion](./data_model/ingestion.md) — Impulse's
 default solvers expect a specific
 [silver-layer shape](./data_model/index.md), and matching that shape during
@@ -125,7 +125,7 @@ the 2000-2500 rpm bin.
 
 ## Where to next
 
-- **[Tutorial — Reporting walkthrough](./demo.md)** — the same workflow
+- **[Tutorial — Reporting walkthrough](tutorial/demo.md)** — the same workflow
   with multiple events, 1D and 2D histograms, and statistics
   aggregators.
 - **[TSAL reference](./references/tsal.md)** — the full DSL for
