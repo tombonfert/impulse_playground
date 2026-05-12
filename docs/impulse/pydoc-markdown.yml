@@ -21,6 +21,9 @@ loaders:
       - mda_query_engine.analyze.query.solvers.key_value_store_solver
       - mda_query_engine.analyze.query.solvers.solver_config
       - mda_query_engine.analyze.query.solvers.query_solver
+      - mda_query_engine.model.series.sample_series
+      - mda_query_engine.model.series.intervals
+      - mda_query_engine.model.series.points_in_time
 
 processors:
   - type: filter

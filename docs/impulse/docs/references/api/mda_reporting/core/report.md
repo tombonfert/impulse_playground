@@ -137,7 +137,7 @@ Create a query builder based on the provided configuration and set container fil
 
 Validates solver/filter compatibility before applying filters:
 - BasicNarrowSolver supports metric filters only (rejects tag filters).
-- KeyValueStoreSolver supports tag filters only (rejects metric filters).
+- KeyValueStoreSolver supports both tag and metric filters.
 - DeltaSolver supports both tag and metric filters.
 
 **Arguments**:

@@ -41,6 +41,21 @@
           ],
           "label": "mda_query_engine.analyze",
           "type": "category"
+        },
+        {
+          "items": [
+            {
+              "items": [
+                "references/api/mda_query_engine/model/series/intervals",
+                "references/api/mda_query_engine/model/series/points_in_time",
+                "references/api/mda_query_engine/model/series/sample_series"
+              ],
+              "label": "mda_query_engine.model.series",
+              "type": "category"
+            }
+          ],
+          "label": "mda_query_engine.model",
+          "type": "category"
         }
       ],
       "label": "mda_query_engine",

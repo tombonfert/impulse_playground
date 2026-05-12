@@ -61,20 +61,28 @@ def filter_container_metrics(spark,
                              pre_filtered_containers_df=None) -> DataFrame
 ```
 
-Filter containers by joining container_metrics with the tag-filtered
+Filter container_metrics and join with tag-filtered container IDs.
 
-container DataFrame.
+Reads the ``container_metrics`` table, applies the per-table
+``column_name_mapping`` to rename physical columns to internal names,
+applies the top-level ``project_id`` filter, any per-table
+``container_metrics.filters``, and any ``MetricExpression`` filters
+extracted from the query.  Finally, inner-joins the result with the
+tag-filtered container DataFrame.
 
 **Arguments**:
 
 - `spark` (`SparkSession`): Spark session used for query execution.
 - `query` (`QueryBuilder`): Query object containing filters and db info.
-- `container_df` (`pyspark.sql.DataFrame`): DataFrame containing tag-filtered container IDs.
-- `pre_filtered_containers_df` (`pyspark.sql.DataFrame`): DataFrame containing pre-filtered container information.
+- `container_df` (`pyspark.sql.DataFrame`): DataFrame containing tag-filtered container IDs (output of
+:meth:`filter_container_tags`).
+- `pre_filtered_containers_df` (`pyspark.sql.DataFrame`): Pre-filtered container_metrics DataFrame.  When provided, it
+replaces the read from ``query.db.container_metrics``.
 
 **Returns**:
 
-`pyspark.sql.DataFrame`: DataFrame containing filtered container metrics.
+`pyspark.sql.DataFrame`: Filtered container metrics with all original columns preserved.
+Deduplicated by ``container_id``.
 
 #### filter\_aliased\_channel\_metrics
 
