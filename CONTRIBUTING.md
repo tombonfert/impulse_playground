@@ -27,17 +27,17 @@ a pull request directly.
 ```bash
 git clone https://github.com/databrickslabs/impulse.git
 cd impulse
-uv sync
+make dev
 ```
 
-`uv sync` creates a `.venv/` in the repo with all runtime and development dependencies
-(pytest, ruff, black, etc.).
+`make dev` runs `uv sync --all-extras`, which creates a `.venv/` in the repo with all
+runtime and development dependencies (pytest, ruff, black, plus pyspark/pandas/etc.
+declared as `local-dev` extras for use outside Databricks runtimes).
 
 ## Running tests
 
 ```bash
-uv run pytest                         # full suite
-uv run pytest --cov                   # with coverage report
+make test                             # full suite with coverage
 uv run pytest tests/path/to/test.py   # a single test file
 ```
 
