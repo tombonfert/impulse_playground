@@ -129,15 +129,15 @@ Two independent filter families:
 
 ## query_engine (optional)
 
-| Field                   | Type           | Default               | Description                                                                                                                 |
-|-------------------------|----------------|-----------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| `solver`                | `str`          | `"BasicNarrowSolver"` | One of `"BasicNarrowSolver"`, `"DeltaSolver"`, `"KeyValueStoreSolver"`.                                                     |
-| `data_type`             | `str`          | `"RLE"`               | `"RLE"` (intervals `[tstart, tend)`) or `"RAW"` (raw timestamps; converted to RLE before aggregation).                      |
-| `drop_implausible_data` | `bool`         | `false`               | When `true`, drops `channels` rows where `is_plausible = false`. Requires `data_type = "RAW"`; combining with `"RLE"` raises a validation error. |
-| `batch_size`            | `int`          | `500`                 | Maximum number of selectors solved per batch.                                                                               |
-| `solver_config`         | `SolverConfig` | `null`                | Per-table column mappings, per-table equality filters, and project scoping. Required (`project_id` field) when `solver = "KeyValueStoreSolver"`. See [Solver column mappings and filters](#solver-column-mappings-and-filters). |
+| Field                   | Type           | Default                  | Description                                                                                                                 |
+|-------------------------|----------------|--------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| `solver`                | `str`          | `"KeyValueStoreSolver"`  | One of `"DeltaSolver"`, `"KeyValueStoreSolver"`. `"KeyValueStoreSolver"` works either against a narrow EAV `container_tags` table or, when `source.container_tags_table` is omitted, against a wide-only data model where container attributes live directly on `container_metrics`. |
+| `data_type`             | `str`          | `"RLE"`                  | `"RLE"` (intervals `[tstart, tend)`) or `"RAW"` (raw timestamps; converted to RLE before aggregation).                      |
+| `drop_implausible_data` | `bool`         | `false`                  | When `true`, drops `channels` rows where `is_plausible = false`. Requires `data_type = "RAW"`; combining with `"RLE"` raises a validation error. |
+| `batch_size`            | `int`          | `500`                    | Maximum number of selectors solved per batch.                                                                               |
+| `solver_config`         | `SolverConfig` | `null`                   | Per-table column mappings, per-table equality filters, and project scoping. Set `project_id` to scope reads by project — it is applied to `container_tags` (if configured), `container_metrics`, and `channel_mapping` (if configured), so it works in both narrow EAV and wide-only data models. Omit it when you don't need project scoping. See [Solver column mappings and filters](#solver-column-mappings-and-filters). |
 
-If `query_engine` is omitted, the default is `BasicNarrowSolver` with
+If `query_engine` is omitted, the default is `KeyValueStoreSolver` with
 `data_type = "RLE"`.
 
 ---
@@ -159,8 +159,10 @@ in `solver_config` so the solver renames each table's columns at read time.
 
 Top-level fields on `SolverConfig`:
 
-- `project_id` (str, optional): Required when `solver = "KeyValueStoreSolver"`. Applied as a filter
-  on the `project_id` column of `container_tags` and `channel_mapping`.
+- `project_id` (str, optional): Project scope. When set, the solver applies an equality filter on
+  the `project_id` column (after column-name mapping) of every table it reads that carries one —
+  `container_tags` (if configured), `container_metrics`, and `channel_mapping` (if configured).
+  Omit it if you don't need project-level scoping; the solver does not require it.
 
 Per-table sections (each a `TableConfig`):
 
@@ -186,19 +188,20 @@ Internal column names that mappings can target:
 | `project_id`    | Project scoping column                                   |
 | `parent_id`     | Parent/scope identifier                                  |
 
-:::caution Wiring caveat
+:::note Per-solver feature support
 
-When a report is built from config (the standard `Report(config=...)` /
-`Report(config_path=...)` path), `solver_config` is read from
-`query_engine.solver_config` and **only passed to
-`KeyValueStoreSolver`**. The `Report` factory does not forward it to
-`BasicNarrowSolver` or `DeltaSolver`, so `solver_config` in your JSON
-config is silently ignored for those two solvers.
+`solver_config` in your JSON config is forwarded to **both**
+`KeyValueStoreSolver` and `DeltaSolver` by the `Report` factory.
+However, only the parts each solver supports are actually consumed:
 
-`BasicNarrowSolver` and `DeltaSolver` themselves accept a `SolverConfig`
-in their constructors — but you have to instantiate them yourself and
-pass the solver instance into `query.solve(solver=...)` rather than
-relying on the config-driven factory.
+- `KeyValueStoreSolver` uses all sections: per-table
+  `column_name_mapping`, per-table `filters`, and top-level
+  `project_id`.
+- `DeltaSolver` uses only the per-table `column_name_mapping` entries
+  on `container_tags`, `container_metrics`, `channel_tags`,
+  `channel_metrics`, and `channels`. Per-table `filters`, top-level
+  `project_id`, and the `channel_mapping` section (alias resolution)
+  are **silently ignored** — the solver class does not read them.
 
 :::
 

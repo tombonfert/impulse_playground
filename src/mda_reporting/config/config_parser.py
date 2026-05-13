@@ -173,12 +173,10 @@ class Solvers(Enum):
 
     Attributes
     ----------
-    BASIC_NARROW_SOLVER : str
     DELTA_SOLVER : str
     KEY_VALUE_STORE_SOLVER : str
     """
 
-    BASIC_NARROW_SOLVER = "BasicNarrowSolver"
     DELTA_SOLVER = "DeltaSolver"
     KEY_VALUE_STORE_SOLVER = "KeyValueStoreSolver"
 
@@ -191,7 +189,12 @@ class Source(BaseModel):
     ----------
     container_tags_table : str, optional
         Full Unity Catalog path to the container tags table (narrow/EAV format).
-        Required when using KeyValueStoreSolver.
+        Required when filtering by container tags. Omit for wide-only data
+        models that carry container attributes as columns on
+        ``container_metrics``. ``project_id`` scoping is independent of this
+        field — it works in both narrow EAV and wide-only data models because
+        it is applied to ``container_metrics`` (and ``channel_mapping`` if
+        configured) regardless of whether ``container_tags_table`` is set.
     container_metrics_table : str
         Full Unity Catalog path to the container metrics table.
     channel_metrics_table : str
@@ -406,7 +409,7 @@ class QueryEngine(BaseModel):
 
     Parameters
     ----------
-    solver : Solvers, default=Solvers.BASIC_NARROW_SOLVER
+    solver : Solvers, default=Solvers.KEY_VALUE_STORE_SOLVER
         The solver type to use for query execution.
     solver_config : SolverConfig, optional
         Per-table column name mappings and filter configuration for
@@ -415,41 +418,32 @@ class QueryEngine(BaseModel):
         scoping.  Key sub-fields:
 
         - ``project_id`` (str): Top-level project filter value applied
-          to container_tags and channel_mapping tables.
-        - Per-table sections (``container_tags``, ``channel_mapping``,
-          ``channels``, etc.) each with ``column_name_mapping`` and
-          ``filters`` dicts.
+          to container_tags, container_metrics, and channel_mapping
+          tables when the corresponding columns exist after column
+          renaming.
+        - Per-table sections (``container_tags``, ``container_metrics``,
+          ``channel_mapping``, ``channels``, etc.) each with
+          ``column_name_mapping`` and ``filters`` dicts.
 
         When omitted, all default column names are used and no
         project/toolbox filtering is applied.
 
     Notes
     -----
-    The default solver is set to ``Solvers.BASIC_NARROW_SOLVER``.
-    When using ``Solvers.KEY_VALUE_STORE_SOLVER``, ``project_id`` must
-    be provided.
+    The default solver is ``Solvers.KEY_VALUE_STORE_SOLVER``, which
+    operates either with a narrow EAV ``container_tags`` table or in
+    a wide-only data model when ``source.container_tags_table`` is
+    not configured.
+
     - RLE channel data must contain 'container_id', 'channel_id', 'tstart', 'tend', 'value' columns
     - RAW channel data must contain 'container_id', 'channel_id', 'timestamp', 'value' columns
     """
 
-    solver: Solvers = Solvers.BASIC_NARROW_SOLVER
+    solver: Solvers = Solvers.KEY_VALUE_STORE_SOLVER
     data_type: DataType = DataType.RLE
     drop_implausible_data: bool = False
     solver_config: SolverConfig | None = None
     batch_size: int = 500
-
-    @model_validator(mode="after")
-    def validate_project_id_for_key_value_store_solver(self):
-        """Validate that project_id is provided when using KeyValueStoreSolver."""
-        if self.solver == Solvers.KEY_VALUE_STORE_SOLVER:
-            has_project_id = (
-                self.solver_config is not None and self.solver_config.project_id is not None
-            )
-            if not has_project_id:
-                raise ValueError(
-                    "project_id is required in solver_config " "when using KeyValueStoreSolver"
-                )
-        return self
 
     @model_validator(mode="after")
     def validate_drop_implausible_data_requires_raw(self):
@@ -507,7 +501,7 @@ class MdaConfig(BaseModel):
      container_filters : ContainerFilters, optional
          Optional container-level filters (tag-based and/or metric-based).
      query_engine : QueryEngine, optional
-         Optional query engine configuration. Defaults to Solvers.BASIC_NARROW_SOLVER.
+         Optional query engine configuration. Defaults to Solvers.KEY_VALUE_STORE_SOLVER.
      incremental : IncrementalConfig, optional
          Optional incremental processing configuration. Defaults to IncrementalConfig().
      measurement_dimensions : list of MeasurementDimensions, optional
@@ -569,7 +563,7 @@ class MdaConfig(BaseModel):
     source: Source
     unity_sink: UnitySink | None = None
     container_filters: ContainerFilters | None = None
-    query_engine: QueryEngine = QueryEngine(solver=Solvers.BASIC_NARROW_SOLVER)
+    query_engine: QueryEngine = QueryEngine(solver=Solvers.KEY_VALUE_STORE_SOLVER)
     incremental: IncrementalConfig | None = None
 
     measurement_dimensions: list[MeasurementDimensions] | None = [
@@ -582,15 +576,3 @@ class MdaConfig(BaseModel):
         MeasurementDimensions.PROJECT_ID,
         MeasurementDimensions.ENVIRONMENT,
     ]
-
-    @model_validator(mode="after")
-    def validate_container_tags_for_key_value_store_solver(self):
-        """Validate that container_tags_table is provided when using KeyValueStoreSolver."""
-        if (
-            self.query_engine.solver == Solvers.KEY_VALUE_STORE_SOLVER
-            and self.source.container_tags_table is None
-        ):
-            raise ValueError(
-                "source.container_tags_table is required when using KeyValueStoreSolver"
-            )
-        return self

@@ -5,10 +5,10 @@ title: Ingestion
 
 # Ingestion
 
-Impulse's default solvers read from a silver layer composed of a minimum of
-three tables: `container_metrics`, `channel_metrics`, and `channels`. Two
-additional tables, `container_tags` and `channel_tags`, are optional but
-strongly recommended. They carry the contextual metadata that the
+Impulse's [default solvers](../references/query_engine.md) read from a
+silver layer composed of a minimum of three tables: `container_metrics`,
+`channel_metrics`, and `channels`. Two additional tables, `container_tags`
+and `channel_tags`, are optional but strongly recommended. They carry the contextual metadata that the
 user-facing channel selection API (`query.channel(channel_name="Engine_RPM")`)
 and tag-based container filtering rely on. The full schema is on the
 [Silver Layer ER Diagram](silver_layer_schema.md). This page is for engineers
@@ -203,14 +203,12 @@ for the full schema.
 
 How it gets wired in depends on which solver you use:
 
-- **`KeyValueStoreSolver`** — set `query_engine.solver_config` in your
-  report config. The `Report` factory passes it through automatically.
-- **`BasicNarrowSolver` / `DeltaSolver`** — both constructors accept a
-  `SolverConfig`, but the `Report` factory does **not** forward
-  `query_engine.solver_config` to them. If you need column-name remapping
-  for these solvers you have to instantiate them yourself and pass the
-  instance into `query.solve(solver=my_solver)` rather than going through
-  the config-driven `Report` path.
+- **`KeyValueStoreSolver`** and **`DeltaSolver`** — set
+  `query_engine.solver_config` in your report config. The `Report`
+  factory forwards it to both solvers. `KeyValueStoreSolver` consumes
+  every section (column mappings, per-table `filters`, `project_id`,
+  `channel_mapping`); `DeltaSolver` consumes only the per-table
+  `column_name_mapping` entries and silently ignores the rest.
 
 Trade-off either way: this gives you naming flexibility and per-table
 scoping filters without writing code, but the underlying tables must
