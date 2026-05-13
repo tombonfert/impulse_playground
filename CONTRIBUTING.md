@@ -53,28 +53,26 @@ Notes specific to Impulse:
 We use **black** for formatting and **ruff** for linting. Both are configured in
 [pyproject.toml](pyproject.toml) (line length 99, target Python 3.12).
 
-The repo includes a helper script that runs both:
+To format your code and apply ruff auto-fixes:
 
 ```bash
-./format_code.sh
+make fmt
 ```
 
-Or run them manually:
+To check formatting and lint without modifying files (what CI runs):
 
 ```bash
-uv run black src/ tests/
-uv run ruff check src/ tests/ --fix
+make lint
 ```
 
-CI ([`.github/workflows/acceptance.yml`](.github/workflows/acceptance.yml)) runs `black --check`
-and `ruff check` on every pull request, so please run `./format_code.sh` before pushing to avoid
-CI failures.
+CI ([`.github/workflows/acceptance.yml`](.github/workflows/acceptance.yml)) runs `make lint`
+on every pull request, so please run `make fmt` before pushing to avoid CI failures.
 
 ## Submitting a pull request
 
 1. Fork the repository and create a feature branch.
 2. Make your changes; add or update tests covering the new behavior.
-3. Run `./format_code.sh` and `uv run pytest` locally.
+3. Run `make fmt` and `make test` locally.
 4. Open a pull request. The [PR template](.github/pull_request_template.md) walks you through
    the summary, changes, and test plan.
 5. CI must pass (format, lint, tests). A maintainer will review the PR.
@@ -82,7 +80,7 @@ CI failures.
 ## Definition of done
 
 - [ ] New or changed behavior is covered by tests
-- [ ] `./format_code.sh` and `uv run pytest` pass locally
+- [ ] `make lint` and `make test` pass locally
 - [ ] Public APIs have NumPy-style docstrings (see ruff config in [pyproject.toml](pyproject.toml))
 - [ ] User-facing changes are reflected in [README.md](README.md) and/or `docs/impulse/`
 - [ ] PR description follows the [template](.github/pull_request_template.md)
