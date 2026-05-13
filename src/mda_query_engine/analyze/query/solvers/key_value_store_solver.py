@@ -138,9 +138,7 @@ class KeyValueStoreSolver(BasicNarrowSolver):
         """
         container_id_col = self.config.container_id_col
 
-        metric_filters = [
-            filt for filt in query.filters if isinstance(filt, MetricExpression)
-        ]
+        metric_filters = [filt for filt in query.filters if isinstance(filt, MetricExpression)]
 
         if pre_filtered_containers_df is not None:
             metrics = pre_filtered_containers_df
@@ -152,9 +150,7 @@ class KeyValueStoreSolver(BasicNarrowSolver):
         )
 
         if self.config.project_id is not None:
-            metrics = metrics.where(
-                F.col(self.config.project_id_col) == self.config.project_id
-            )
+            metrics = metrics.where(F.col(self.config.project_id_col) == self.config.project_id)
 
         for col_name, value in self.config.container_metrics.filters.items():
             metrics = metrics.where(F.col(col_name) == value)
