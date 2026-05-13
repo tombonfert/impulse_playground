@@ -18,24 +18,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  fmt:
-    name: Format check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
-        with:
-          version: "0.11.2"
-          checksum: "7ac2ca0449c8d68dae9b99e635cd3bc9b22a4cb1de64b7c43716398447d42981"
-
-      - name: Check formatting with Black
-        run: |
-          uv run black --check src/ tests/ --diff -v
-
   lint:
-    name: Lint check
+    name: Lint and format check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -47,26 +31,21 @@ jobs:
           checksum: "7ac2ca0449c8d68dae9b99e635cd3bc9b22a4cb1de64b7c43716398447d42981"
 
       - name: Install dependencies
-        run: uv sync
+        run: make dev
 
-      - name: Lint with Ruff
-        run: uv run ruff check src/ tests/
+      - name: Lint and format check
+        run: make lint
 
   test:
     name: Testing
     runs-on: ubuntu-latest
-    needs: [ fmt, lint ]
+    needs: [ lint ]
     strategy:
       matrix:
         python-version: [ '3.12' ]
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: ${{ matrix.python-version }}
 
       - name: Install UV
         uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
@@ -75,14 +54,11 @@ jobs:
           version: "0.11.2"
           checksum: "7ac2ca0449c8d68dae9b99e635cd3bc9b22a4cb1de64b7c43716398447d42981"
 
-      - name: Set UV Python version
-        run: uv python pin ${{ matrix.python-version }}
-
-      - name: Install package and dependencies
-        run: uv sync
+      - name: Install dependencies
+        run: make dev
 
       - name: Run unit tests with coverage
-        run: uv run pytest tests/ --cov=src --cov-branch --cov-report=xml
+        run: make test
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.12'
