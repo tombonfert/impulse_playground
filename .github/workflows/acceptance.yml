@@ -11,7 +11,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -40,6 +39,9 @@ jobs:
     name: Testing
     runs-on: ubuntu-latest
     needs: [ lint ]
+    permissions:
+      # Required for OIDC auth to Codecov via use_oidc: true on codecov-action
+      id-token: write
     strategy:
       matrix:
         python-version: [ '3.12' ]
