@@ -19,7 +19,11 @@ concurrency:
 jobs:
   lint:
     name: Lint and format check
-    runs-on: ubuntu-latest
+    runs-on:
+      group: databrickslabs-protected-runner-group
+      labels: linux-ubuntu-latest
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -29,6 +33,9 @@ jobs:
           version: "0.11.2"
           checksum: "7ac2ca0449c8d68dae9b99e635cd3bc9b22a4cb1de64b7c43716398447d42981"
 
+      - name: Setup for JFrog
+        uses: ./.github/actions/jfrog-auth
+
       - name: Install dependencies
         run: make dev
 
@@ -37,7 +44,9 @@ jobs:
 
   test:
     name: Testing
-    runs-on: ubuntu-latest
+    runs-on:
+      group: databrickslabs-protected-runner-group
+      labels: linux-ubuntu-latest
     needs: [ lint ]
     permissions:
       id-token: write
@@ -54,6 +63,9 @@ jobs:
           enable-cache: false
           version: "0.11.2"
           checksum: "7ac2ca0449c8d68dae9b99e635cd3bc9b22a4cb1de64b7c43716398447d42981"
+
+      - name: Setup for JFrog
+        uses: ./.github/actions/jfrog-auth
 
       - name: Install dependencies
         run: make dev
