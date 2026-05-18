@@ -41,6 +41,8 @@ lock-dependencies: UV_LOCKED := 0
 lock-dependencies:
 	uv lock
 	printf 'setuptools>=61.0\nwheel\n' | uv pip compile --generate-hashes --universal --no-header --quiet - > .build-constraints.txt
+	@perl -pi -e 's|registry = "https://[^"]*"|registry = "https://pypi.org/simple"|g' uv.lock
+	@printf 'Stripped registry references from uv.lock.\n'
 
 .DEFAULT: all
 .PHONY: all clean dev lint fmt test coverage build lock-dependencies
