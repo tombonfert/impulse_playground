@@ -1,12 +1,12 @@
 # Configuration
 
-`MdaConfig` configures everything about a report: the silver-layer input
+`ImpulseConfig` configures everything about a report: the silver-layer input
 tables, the gold-layer output location, container-level filters, the
 query-engine solver, incremental processing, and which container columns
 get surfaced into the gold-layer measurement dimension. Configuration is
 defined as JSON (or an equivalent Python dictionary) and validated using
 Pydantic models. The canonical schema lives in
-[`src/mda_reporting/config/config_parser.py`](https://github.com/databrickslabs/impulse/blob/main/src/mda_reporting/config/config_parser.py).
+[`src/impulse_reporting/config/config_parser.py`](https://github.com/databrickslabs/impulse/blob/main/src/impulse_reporting/config/config_parser.py).
 
 ## Quick example
 
