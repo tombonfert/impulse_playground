@@ -183,6 +183,14 @@ pre-filtering before scanning the much larger `channels` table.
 | `pz90`                  | `float`  | Yes      | 90th percentile.                  |
 | `pz99`                  | `float`  | Yes      | 99th percentile.                  |
 
+An optional `unit: string` column may also be present. When the report
+config sets a `unit_conversion_table` and the solver resolves an aliased
+selector, this column is treated as the authoritative source unit of the
+physical channel and takes precedence over `channel_mapping.source_unit`
+via `COALESCE(channel_metrics.unit, channel_mapping.source_unit)`. The
+column is not part of the canonical schema — omit it for layouts that
+don't need per-channel physical units.
+
 ---
 
 ## channel_tags
@@ -260,7 +268,44 @@ channel name to one or more physical channels keyed by `project_id` /
 | `channel_name` | `string` | No       | Logical channel name to match against `channel_with_alias` selectors. |
 | `data_key`     | `string` | No       | Physical lookup key joined to `channel_metrics`.                      |
 | `priority`     | `int`    | Yes      | Tie-breaker when multiple physical channels match a logical name.     |
+| `source_unit`  | `string` | Yes      | **Fallback** source unit for aliased reads of this mapping. The solver resolves the effective source unit as `COALESCE(channel_metrics.unit, channel_mapping.source_unit)`, so `channel_mapping.source_unit` only takes effect when `channel_metrics.unit` is null or absent. When configured together with `target_unit` and a `unit_conversion_table`, the solver converts values from source to target unit on aliased reads. |
+| `target_unit`  | `string` | Yes      | Target unit for aliased reads of this mapping. Always taken from the mapping (there is no analogous column on `channel_metrics`). |
 
 Configured via `source.channel_mapping_table` (see
 [Configuration](../config/configuration.md)). Joins to `channel_metrics`
 on `(project_id, data_key, channel_name)`.
+
+**Per-channel unit conversion is single-target per query.** Storing two
+distinct aliases that resolve to the same physical channel (same
+`(source_channel, data_key)` → same `channel_metrics.channel_id`) with
+different `target_unit` (or different `source_unit`) values is allowed at
+the table level. The constraint only applies at query time: if a single
+query selects **both** such aliases via `channel_with_alias()`, the solver
+raises `ValueError`. The current per-channel factor model attaches one
+conversion factor per physical channel and cannot apply two distinct
+conversions to the same channel in the same query. Workarounds: select
+the conflicting aliases in **separate queries**, or align the mapping rows
+so they agree on the unit pair per physical channel.
+
+---
+
+## unit_conversion (optional)
+
+Per-unit-family conversion factors. Read by `KeyValueStoreSolver` at
+solve time when `source.unit_conversion_table` is configured and the
+`channel_mapping` table carries `source_unit` / `target_unit` columns.
+
+| Column              | Type     | Nullable | Description                                                                                                |
+|---------------------|----------|----------|------------------------------------------------------------------------------------------------------------|
+| `group_id`          | `string` | No       | Unit family identifier (e.g. `speed`, `rotation`). Only units within the same family can convert into each other. |
+| `unit`              | `string` | No       | Unit name. Matches the `source_unit` / `target_unit` values on `channel_mapping`.                          |
+| `conversion_factor` | `double` | No       | Multiplier that converts a value in this unit to the family's base unit. The base unit has factor `1.0`. **Required to be a positive non-null number** — a row with `conversion_factor` null, zero, or negative is rejected at query time with `ValueError` (validation runs once per query that uses unit conversion). |
+
+For each aliased channel the solver looks up `source_factor` (the row
+whose `unit` matches `source_unit`) and `target_factor` (the row whose
+`unit` matches `target_unit`, constrained to the same `group_id`) and
+multiplies values by `source_factor / target_factor`. Missing rows or a
+`group_id` mismatch yield a null factor and no conversion.
+
+Configured via `source.unit_conversion_table` (see
+[Configuration](../config/configuration.md)).
