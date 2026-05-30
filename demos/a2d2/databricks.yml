@@ -34,11 +34,11 @@ variables:
     default: "0.1"
   index_scan_limit:
     default: "20000"
-  gif_max_duration_s:
-    description: Max seconds of footage per event GIF (analysis notebook).
+  clip_max_duration_s:
+    description: Max seconds of footage per event MP4 clip (analysis notebook).
     default: "5"
-  gif_play_fps:
-    description: Playback frames-per-second for event GIFs (analysis notebook).
+  clip_fps:
+    description: Playback frames-per-second for event MP4 clips (analysis notebook).
     default: "5"
 
 artifacts:
@@ -75,7 +75,7 @@ resources:
               - ./dist/databricks_impulse-*.whl
 
     a2d2_analysis:
-      name: "[A2D2] bus + camera analysis (events + GIFs)"
+      name: "[A2D2] bus + camera analysis (events + MP4 clips)"
       tasks:
         - task_key: analyze
           notebook_task:
@@ -85,8 +85,8 @@ resources:
               schema: ${var.schema}
               table_prefix: ${var.table_prefix}
               volume: ${var.volume}
-              gif_max_duration_s: ${var.gif_max_duration_s}
-              gif_play_fps: ${var.gif_play_fps}
+              clip_max_duration_s: ${var.clip_max_duration_s}
+              clip_fps: ${var.clip_fps}
           environment_key: default
       environments:
         - environment_key: default
