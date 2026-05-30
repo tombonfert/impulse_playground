@@ -4,8 +4,9 @@
 #
 #   cd demos/a2d2
 #   databricks bundle deploy  -t dev -p <your-profile>
-#   databricks bundle run a2d2_ingestion -t dev -p <your-profile>   # 1) download + ingest
-#   databricks bundle run a2d2_analysis  -t dev -p <your-profile>   # 2) events + event GIFs
+#   databricks bundle run a2d2_ingestion        -t dev -p <your-profile>  # 1) download + ingest
+#   databricks bundle run a2d2_object_detection -t dev -p <your-profile>  # 2) detect -> channels
+#   databricks bundle run a2d2_analysis         -t dev -p <your-profile>  # 3) events + MP4 clips
 #
 # The impulse package is built from the repo root (../..) into ./dist as a wheel and
 # installed on the serverless jobs, so `import impulse_*` works without the repo being on
@@ -40,6 +41,15 @@ variables:
   clip_fps:
     description: Playback frames-per-second for event MP4 clips (analysis notebook).
     default: "5"
+  detect_model:
+    description: torchvision detector (fasterrcnn_resnet50_fpn | ssdlite320_mobilenet_v3_large | fcos_resnet50_fpn).
+    default: fasterrcnn_resnet50_fpn
+  detect_score_threshold:
+    description: Minimum detection score to count a box.
+    default: "0.5"
+  detect_repartitions:
+    description: Spark partitions for distributed inference (controls parallelism).
+    default: "16"
 
 artifacts:
   impulse_wheel:
@@ -94,6 +104,32 @@ resources:
             environment_version: "5"
             dependencies:
               - ./dist/databricks_impulse-*.whl
+
+    # Object detection -> silver channels. Standalone job for now; once proven it can be
+    # folded into a2d2_ingestion as a `detect` task with `depends_on: [{task_key: ingest}]`.
+    a2d2_object_detection:
+      name: "[A2D2] object detection -> channels"
+      tasks:
+        - task_key: detect
+          notebook_task:
+            notebook_path: ./a2d2_object_detection.ipynb
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              table_prefix: ${var.table_prefix}
+              volume: ${var.volume}
+              detect_model: ${var.detect_model}
+              detect_score_threshold: ${var.detect_score_threshold}
+              detect_repartitions: ${var.detect_repartitions}
+          environment_key: detect
+      environments:
+        - environment_key: detect
+          spec:
+            environment_version: "5"
+            dependencies:
+              - ./dist/databricks_impulse-*.whl
+              - torch
+              - torchvision
 
 targets:
   dev:
