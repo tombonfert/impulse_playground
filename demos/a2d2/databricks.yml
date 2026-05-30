@@ -30,11 +30,9 @@ variables:
     default: a2d2_raw
   download_images:
     default: "true"
-  images_per_second:
-    description: Images to extract per second across the bus time window.
-    default: "0.1"
-  index_scan_limit:
-    default: "20000"
+  extract_partitions:
+    description: Parallel Spark tasks for the index-free camera-tar untar.
+    default: "32"
   clip_max_duration_s:
     description: Max seconds of footage per event MP4 clip (analysis notebook).
     default: "5"
@@ -53,6 +51,12 @@ variables:
   detect_repartitions:
     description: Spark partitions for distributed inference (controls parallelism).
     default: "16"
+  estimate_distance:
+    description: Also estimate distance-to-object via Depth Anything V2 metric depth.
+    default: "true"
+  depth_model:
+    description: HuggingFace metric-depth model id (Depth Anything V2 metric).
+    default: depth-anything/Depth-Anything-V2-Metric-Outdoor-Small-hf
 
 artifacts:
   impulse_wheel:
@@ -74,9 +78,8 @@ resources:
               table_prefix: ${var.table_prefix}
               volume: ${var.volume}
               download_images: ${var.download_images}
-              images_per_second: ${var.images_per_second}
-              index_scan_limit: ${var.index_scan_limit}
-              skip_download_if_present: "true"
+              extract_partitions: ${var.extract_partitions}
+              skip_download_if_present: "false"
               drop_created_tables: "false"
           environment_key: default
       environments:
@@ -125,15 +128,34 @@ resources:
               detect_model: ${var.detect_model}
               detect_score_threshold: ${var.detect_score_threshold}
               detect_repartitions: ${var.detect_repartitions}
-          environment_key: detect
-      environments:
-        - environment_key: detect
-          spec:
-            environment_version: "5"
-            dependencies:
-              - ./dist/databricks_impulse-*.whl
-              - torch
-              - torchvision
+              estimate_distance: ${var.estimate_distance}
+              depth_model: ${var.depth_model}
+          # Classic compute (DBR 17.3 LTS), not serverless: the detector + Depth Anything V2
+          # depth model loaded per partition OOM'd the serverless Python workers. Memory-
+          # optimized nodes (r5d, local NVMe for spill) give the headroom. torch/torchvision/
+          # transformers are installed by the notebook's %pip cell; the impulse wheel is a
+          # cluster library below. SINGLE_USER access mode is required for the Python UDFs
+          # (mapInPandas/applyInPandas) and FUSE volume reads.
+          new_cluster:
+            # ML runtime (torch + torchvision + pillow preinstalled, version-matched) on a
+            # single-user classic cluster. The notebook only pip-installs transformers.
+            spark_version: "17.3.x-cpu-ml-scala2.13"
+            node_type_id: r5d.2xlarge
+            num_workers: 2
+            data_security_mode: SINGLE_USER
+            # Each UDF task loads the detector + Depth Anything V2, so cap concurrent Python
+            # workers per node: reserve 4 cores/task -> 2 tasks per 8-core node.
+            spark_conf:
+              spark.task.cpus: "4"
+            # On-demand workers (no spot) to avoid preemption mid-inference.
+            aws_attributes:
+              availability: ON_DEMAND
+            # Persist driver/executor logs so failures are diagnosable after the cluster ends.
+            cluster_log_conf:
+              dbfs:
+                destination: dbfs:/cluster-logs/a2d2-detect
+          libraries:
+            - whl: ./dist/databricks_impulse-*.whl
 
 targets:
   dev:
