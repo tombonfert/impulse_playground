@@ -1,0 +1,10 @@
+# Never commit any A2D2 dataset content or derived data.
+# The A2D2 dataset is CC BY-ND 4.0 (NoDerivatives) — it must not be redistributed.
+# The ingestion notebook downloads it at runtime into your own workspace.
+data/
+*.tar
+*.json
+**/*.png
+# DABs build artifacts
+dist/
+.databricks/
