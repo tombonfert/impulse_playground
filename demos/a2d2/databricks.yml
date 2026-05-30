@@ -41,6 +41,9 @@ variables:
   clip_fps:
     description: Playback frames-per-second for event MP4 clips (analysis notebook).
     default: "5"
+  clips_per_event:
+    description: How many MP4 clips to export per event name (analysis notebook).
+    default: "5"
   detect_model:
     description: torchvision detector (fasterrcnn_resnet50_fpn | ssdlite320_mobilenet_v3_large | fcos_resnet50_fpn).
     default: fasterrcnn_resnet50_fpn
@@ -97,6 +100,7 @@ resources:
               volume: ${var.volume}
               clip_max_duration_s: ${var.clip_max_duration_s}
               clip_fps: ${var.clip_fps}
+              clips_per_event: ${var.clips_per_event}
           environment_key: default
       environments:
         - environment_key: default
