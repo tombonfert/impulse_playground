@@ -48,9 +48,12 @@ variables:
   detect_score_threshold:
     description: Minimum detection score to count a box.
     default: "0.5"
+  frames_per_second:
+    description: Temporally downsample detection to this many frames/sec (0 = all frames).
+    default: "1"
   detect_repartitions:
-    description: Spark partitions for distributed inference (controls parallelism).
-    default: "16"
+    description: Spark partitions for distributed inference (match the cluster's core count).
+    default: "32"
   estimate_distance:
     description: Also estimate distance-to-object via Depth Anything V2 metric depth.
     default: "true"
@@ -127,6 +130,7 @@ resources:
               volume: ${var.volume}
               detect_model: ${var.detect_model}
               detect_score_threshold: ${var.detect_score_threshold}
+              frames_per_second: ${var.frames_per_second}
               detect_repartitions: ${var.detect_repartitions}
               estimate_distance: ${var.estimate_distance}
               depth_model: ${var.depth_model}
@@ -141,12 +145,8 @@ resources:
             # single-user classic cluster. The notebook only pip-installs transformers.
             spark_version: "17.3.x-cpu-ml-scala2.13"
             node_type_id: r5d.2xlarge
-            num_workers: 2
+            num_workers: 4          # 4 x r5d.2xlarge (8 cores) = 32 worker cores
             data_security_mode: SINGLE_USER
-            # Each UDF task loads the detector + Depth Anything V2, so cap concurrent Python
-            # workers per node: reserve 4 cores/task -> 2 tasks per 8-core node.
-            spark_conf:
-              spark.task.cpus: "4"
             # On-demand workers (no spot) to avoid preemption mid-inference.
             aws_attributes:
               availability: ON_DEMAND
