@@ -17,6 +17,12 @@
 bundle:
   name: a2d2-demo
 
+# The frontend build output is .gitignore'd (dist/ rule for the wheel), so force it
+# into the bundle sync — the FastAPI app serves the React SPA from app/frontend/dist.
+sync:
+  include:
+    - app/frontend/dist/**
+
 variables:
   catalog:
     description: Unity Catalog catalog for the silver tables and download volume.
@@ -71,6 +77,32 @@ artifacts:
     build: uv build --wheel ../.. --out-dir ./dist
 
 resources:
+  # ---------------------------------------------------------------------------
+  # Serverless SQL warehouse + Databricks App for the A2D2 Event Explorer.
+  # The app (demos/a2d2/app) is a FastAPI + React SPA that reads the silver
+  # tables and streams MP4 clips. Its app.yaml references the warehouse via the
+  # resource key `sql-warehouse` (valueFrom -> DATABRICKS_WAREHOUSE_ID).
+  # ---------------------------------------------------------------------------
+  sql_warehouses:
+    a2d2_app_wh:
+      name: "[A2D2] event explorer warehouse"
+      warehouse_type: PRO
+      enable_serverless_compute: true
+      cluster_size: "2X-Small"
+      auto_stop_mins: 10
+      max_num_clusters: 1
+
+  apps:
+    a2d2_explorer:
+      name: a2d2-event-explorer
+      description: "A2D2 event explorer — map + clips + channel stats over the silver tables."
+      source_code_path: ./app
+      resources:
+        - name: sql-warehouse
+          sql_warehouse:
+            id: ${resources.sql_warehouses.a2d2_app_wh.id}
+            permission: CAN_USE
+
   jobs:
     a2d2_ingestion:
       name: "[A2D2] bus + camera ingestion (3 drives)"

@@ -6,6 +6,12 @@ data/
 *.json
 **/*.png
 **/*.mp4
-# DABs build artifacts
-dist/
+# DABs build artifacts (the impulse wheel lives in demos/a2d2/dist/)
+/dist/
 .databricks/
+# Frontend build output MUST ship with the app (served by FastAPI from frontend/dist).
+!app/frontend/dist/
+!app/frontend/dist/**
+# Never commit node_modules / python venv.
+app/frontend/node_modules/
+app/.venv/

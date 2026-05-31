@@ -1,0 +1,12 @@
+command: ['uvicorn', 'backend.main:app', '--host', '0.0.0.0', '--port', '8000']
+env:
+  - name: 'DATABRICKS_WAREHOUSE_ID'
+    valueFrom: 'sql-warehouse'
+  - name: 'A2D2_CATALOG'
+    value: 'mda_demo'
+  - name: 'A2D2_SCHEMA'
+    value: 'a2d2_demo'
+  - name: 'A2D2_TABLE_PREFIX'
+    value: 'a2d2'
+  - name: 'A2D2_VOLUME'
+    value: 'a2d2_raw'
