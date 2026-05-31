@@ -11,6 +11,7 @@ import FilterSidebar, { SelectedFilters } from './components/FilterSidebar';
 import EventTable from './components/EventTable';
 import MapView from './components/MapView';
 import DetailPanel from './components/DetailPanel';
+import LandingPage from './components/LandingPage';
 
 const EMPTY: SelectedFilters = {
   vehicle: [],
@@ -22,10 +23,12 @@ const EMPTY: SelectedFilters = {
 };
 
 export default function App() {
+  const [view, setView] = useState<'landing' | 'explore'>('landing');
   const [filters, setFilters] = useState<Filters | null>(null);
   const [selected, setSelected] = useState<SelectedFilters>(EMPTY);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [firstEventsLoaded, setFirstEventsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventRow | null>(null);
   const [route, setRoute] = useState<RoutePoint[]>([]);
@@ -60,7 +63,10 @@ export default function App() {
         );
       })
       .catch((e) => setError(String(e)))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setFirstEventsLoaded(true);
+      });
   }, [selected]);
 
   // Load route for the selected event's drive.
@@ -76,6 +82,22 @@ export default function App() {
 
   const eventCount = events.length;
   const clipCount = useMemo(() => events.filter((e) => e.has_clip).length, [events]);
+
+  // Warm-up indicator: the standard first queries (filters + events) keep firing
+  // on mount regardless of view, warming the SQL warehouse while the landing page
+  // is shown. `prefetching` stays true until both have resolved.
+  const prefetching = !filters || !firstEventsLoaded;
+
+  if (view === 'landing') {
+    return (
+      <LandingPage
+        filters={filters}
+        events={events}
+        prefetching={prefetching}
+        onStart={() => setView('explore')}
+      />
+    );
+  }
 
   return (
     <div className="app">

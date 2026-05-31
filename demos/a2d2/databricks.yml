@@ -41,7 +41,7 @@ variables:
     default: "64"
   clip_max_duration_s:
     description: Max seconds of footage per event MP4 clip (analysis notebook).
-    default: "5"
+    default: "10"
   clip_fps:
     description: Playback frames-per-second for event MP4 clips (analysis notebook).
     default: "5"
@@ -245,3 +245,12 @@ targets:
   dev:
     mode: development
     default: true
+    # Pin the e2 (mda_demo) values so a plain `bundle deploy -t dev` can't reset the jobs to the
+    # generic `main` default. The top-level variable defaults stay `main`/fasterrcnn for the public
+    # demo; this dev target overrides them to what the e2 deployment actually uses. Override per-run
+    # with --var if needed.
+    variables:
+      catalog: mda_demo
+      detect_model: ssdlite320_mobilenet_v3_large
+      estimate_distance: "true"
+      frames_per_second: "1"

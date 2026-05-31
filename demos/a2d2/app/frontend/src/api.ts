@@ -77,7 +77,7 @@ export function clipUrl(ev: EventRow): string {
   )}`;
 }
 
-// Deterministic color per event_type (RGB triple for deck.gl).
+// Deterministic categorical palette (RGB triples for deck.gl).
 const PALETTE: [number, number, number][] = [
   [228, 26, 28],
   [55, 126, 184],
@@ -87,21 +87,41 @@ const PALETTE: [number, number, number][] = [
   [166, 86, 40],
   [247, 129, 191],
   [153, 153, 153],
+  [23, 190, 207],
+  [188, 189, 34],
 ];
-const typeColorCache = new Map<string, [number, number, number]>();
-let nextColor = 0;
-export function colorForType(t: string): [number, number, number] {
-  let c = typeColorCache.get(t);
-  if (!c) {
-    c = PALETTE[nextColor % PALETTE.length];
-    nextColor += 1;
-    typeColorCache.set(t, c);
+
+// Stable color mapping per event_name. The known event names are assigned a
+// fixed palette slot so colors are deterministic across renders and reloads;
+// any unknown name falls back to a deterministic hash into the palette.
+const NAME_ORDER: string[] = [
+  'emergency_braking',
+  'imminent_rear_end',
+  'pedestrian_in_path',
+  'sharp_cornering',
+  'cyclist_close_encounter',
+  'pedestrian_near_miss',
+  'evasive_maneuver',
+  'vru_brake_reaction',
+  'vehicle_moving',
+];
+
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i += 1) {
+    h = (h * 31 + s.charCodeAt(i)) | 0;
   }
-  return c;
+  return Math.abs(h);
 }
 
-export function cssColor(t: string): string {
-  const [r, g, b] = colorForType(t);
+export function colorForName(name: string): [number, number, number] {
+  const idx = NAME_ORDER.indexOf(name);
+  if (idx >= 0) return PALETTE[idx % PALETTE.length];
+  return PALETTE[hashString(name) % PALETTE.length];
+}
+
+export function cssColor(name: string): string {
+  const [r, g, b] = colorForName(name);
   return `rgb(${r},${g},${b})`;
 }
 

@@ -7,7 +7,7 @@ interface Props {
   onSelect: (e: EventRow) => void;
 }
 
-type SortKey = 'event_name' | 'event_type' | 'city' | 'vehicle' | 'start_ts';
+type SortKey = 'event_name' | 'city' | 'vehicle' | 'start_ts';
 
 export default function EventTable({ events, selected, onSelect }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('start_ts');
@@ -48,7 +48,6 @@ export default function EventTable({ events, selected, onSelect }: Props) {
         <thead>
           <tr>
             {header('Event', 'event_name')}
-            {header('Type', 'event_type')}
             {header('City', 'city')}
             {header('Vehicle', 'vehicle')}
             {header('Start', 'start_ts')}
@@ -67,10 +66,9 @@ export default function EventTable({ events, selected, onSelect }: Props) {
                 className={isSel ? 'sel' : ''}
                 onClick={() => onSelect(e)}
               >
-                <td>{e.event_name}</td>
                 <td>
-                  <span className="dot" style={{ background: cssColor(e.event_type) }} />
-                  {e.event_type}
+                  <span className="dot" style={{ background: cssColor(e.event_name) }} />
+                  {e.event_name}
                 </td>
                 <td>{e.city ?? '—'}</td>
                 <td>{e.vehicle ?? '—'}</td>
@@ -81,7 +79,7 @@ export default function EventTable({ events, selected, onSelect }: Props) {
           })}
           {sorted.length === 0 && (
             <tr>
-              <td colSpan={6} className="empty">
+              <td colSpan={5} className="empty">
                 No events match the current filters.
               </td>
             </tr>

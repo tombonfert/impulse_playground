@@ -302,3 +302,359 @@ table.stats td {
 table.stats td.num {
   text-align: right;
 }
+
+/* ---------- Landing page ---------- */
+.landing {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 24px;
+  background: radial-gradient(1200px 600px at 50% -10%, #1a2230 0%, var(--bg) 60%);
+  overflow-y: auto;
+}
+.landing-inner {
+  max-width: 980px;
+  width: 100%;
+  text-align: center;
+}
+.landing-title {
+  font-size: 34px;
+  font-weight: 800;
+  margin: 0 0 14px;
+  letter-spacing: -0.01em;
+}
+.landing-lead {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text);
+  /* Constrained to roughly the architecture figure width and centered. */
+  max-width: 980px;
+  margin: 0 auto 12px;
+  text-align: center;
+}
+.landing-lead strong {
+  color: #fff;
+}
+/* App-style step cards: a row of 4 (Ingest -> Detect -> Mine -> Explore) with icon badges. */
+.landing-steps {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: 980px;
+  /* Extra top margin separates the cards from the intro paragraph. */
+  margin: 34px auto 20px;
+  padding: 0;
+}
+.step-card {
+  flex: 1 1 210px;
+  min-width: 200px;
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  text-align: left;
+  cursor: pointer;
+  background: linear-gradient(180deg, var(--panel2) 0%, var(--panel) 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 13px 14px;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.step-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: 0 8px 22px rgba(74, 158, 255, 0.18);
+}
+.step-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* Selected step: accent border + tint, so it reads as the open panel's owner. */
+.step-card--active {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(74, 158, 255, 0.16) 0%, var(--panel) 100%);
+  box-shadow: 0 8px 22px rgba(74, 158, 255, 0.18);
+}
+.step-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border-radius: 9px;
+  background: rgba(74, 158, 255, 0.14);
+  border: 1px solid rgba(74, 158, 255, 0.3);
+}
+.step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.step-verb {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.step-desc {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+/* Footer row: the "click a step" hint and the data-source credit share one line. */
+.landing-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin: 26px auto 0;
+}
+.step-hint {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+}
+.footer-sep {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Detail panel revealed when a step card is clicked. */
+.step-detail {
+  max-width: 980px;
+  margin: 2px auto 18px;
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 16px 18px;
+  animation: step-detail-in 0.18s ease;
+}
+@keyframes step-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.step-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.step-detail-title {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text);
+}
+.step-detail-text {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.step-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.step-kpi {
+  flex: 1 1 140px;
+  min-width: 120px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.step-kpi-value {
+  font-weight: 700;
+  font-size: 17px;
+  color: #fff;
+}
+.step-kpi-label {
+  color: var(--muted);
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Data-source credit: de-emphasized, dimmer than the body text. */
+.landing-source {
+  font-size: 12px;
+  color: #677081;
+}
+.landing-link-muted {
+  color: #8b97a6;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 500;
+}
+.landing-link-muted:hover {
+  color: var(--accent);
+}
+.landing-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+.landing-link:hover {
+  text-decoration: underline;
+}
+
+/* KPI / stats row below the architecture diagram. */
+.kpi-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 8px 0 8px;
+  text-align: left;
+}
+.kpi-card {
+  flex: 1 1 180px;
+  min-width: 180px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.kpi-label {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.kpi-value {
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+}
+.kpi-detail {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Architecture data-flow diagram (flexbox boxes + arrows, no deps). */
+.arch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 4px;
+  margin: 8px 0 34px;
+}
+.arch-step {
+  display: flex;
+  align-items: stretch;
+  flex: 1 1 165px;
+  min-width: 158px;
+}
+/* Object detection needs a touch more width so its 16px title stays on one line. */
+.arch-step--wide {
+  flex: 1.1 1 190px;
+  min-width: 182px;
+}
+.arch-step--wide .arch-box-title {
+  white-space: nowrap;
+}
+.arch-box {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 14px 16px;
+  min-height: 215px;
+  display: flex;
+  flex-direction: column;
+}
+/* Header (title + subtitle) with a fixed height so the divider line aligns across all boxes. */
+.arch-box-head {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 58px;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.arch-box-title {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.25;
+}
+.arch-box-sub {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+/* Each subtitle line reserves height, so an empty ('') line keeps the divider aligned. */
+.arch-box-sub > div {
+  min-height: 1.4em;
+}
+.arch-bullets {
+  margin: 0;
+  padding-left: 16px;
+  list-style: disc;
+}
+.arch-bullets li {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+/* Denser variant: tighter bullets so more fits without growing the box. */
+.arch-box--dense .arch-bullets li {
+  font-size: 11px;
+  line-height: 1.35;
+  margin-bottom: 2px;
+}
+.arch-box--dense .arch-box-sub {
+  font-size: 11px;
+}
+.arch-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 3px;
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.landing-cta {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 24px;
+}
+.start-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 16px 44px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.start-btn:hover {
+  filter: brightness(1.1);
+}

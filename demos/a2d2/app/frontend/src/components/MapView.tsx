@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import DeckGL from '@deck.gl/react';
 import { ScatterplotLayer, PathLayer } from '@deck.gl/layers';
 import { Map as MapLibre } from 'react-map-gl/maplibre';
-import { EventRow, RoutePoint, colorForType } from '../api';
+import { EventRow, RoutePoint, colorForName } from '../api';
 
 // Free, token-less basemap (Carto positron via MapLibre GL style).
 const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
@@ -72,7 +72,7 @@ export default function MapView({ events, route, selected, onSelect }: Props) {
       pickable: true,
       getPosition: (e) => [e.lon as number, e.lat as number],
       getFillColor: (e) => {
-        const [r, g, b] = colorForType(e.event_type);
+        const [r, g, b] = colorForName(e.event_name);
         return [r, g, b, 220];
       },
       getLineColor: (e) =>
@@ -120,16 +120,16 @@ export default function MapView({ events, route, selected, onSelect }: Props) {
 }
 
 function Legend({ events }: { events: EventRow[] }) {
-  const types = Array.from(new Set(events.map((e) => e.event_type))).sort();
-  if (types.length === 0) return null;
+  const names = Array.from(new Set(events.map((e) => e.event_name))).sort();
+  if (names.length === 0) return null;
   return (
     <div className="legend">
-      {types.map((t) => {
-        const [r, g, b] = colorForType(t);
+      {names.map((n) => {
+        const [r, g, b] = colorForName(n);
         return (
-          <div key={t} className="legend-row">
+          <div key={n} className="legend-row">
             <span className="dot" style={{ background: `rgb(${r},${g},${b})` }} />
-            {t}
+            {n}
           </div>
         );
       })}

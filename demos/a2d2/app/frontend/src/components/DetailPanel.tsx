@@ -65,7 +65,7 @@ export default function DetailPanel({ event }: Props) {
     <section className="detail">
       <h3>
         {event.event_name}{' '}
-        <span className="dot" style={{ background: cssColor(event.event_type) }} />
+        <span className="dot" style={{ background: cssColor(event.event_name) }} />
         <small>{event.event_type}</small>
       </h3>
 
