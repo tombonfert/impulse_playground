@@ -147,3 +147,11 @@ export function fmtTs(ts: number | null): string {
   const d = tsToDate(ts);
   return d ? d.toISOString().replace('T', ' ').replace('.000Z', 'Z') : '—';
 }
+
+// Compact form for the event table (the detail panel shows the full timestamp):
+// "MM-DD HH:MM:SS".
+export function fmtTsShort(ts: number | null): string {
+  const d = tsToDate(ts);
+  if (!d) return '—';
+  return d.toISOString().slice(5, 19).replace('T', ' ');
+}

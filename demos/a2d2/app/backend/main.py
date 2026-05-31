@@ -18,7 +18,7 @@ from fastapi.staticfiles import StaticFiles
 from . import config
 from .db import query
 
-app = FastAPI(title="A2D2 Event Explorer")
+app = FastAPI(title="Impulse Event Explorer")
 
 # --------------------------------------------------------------------------- #
 # Clip listing cache (the volume lists slowly; refresh every few minutes).

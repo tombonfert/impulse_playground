@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Filters, EventRow } from '../api';
+import databricksIcon from '../assets/databricks_icon.svg';
+import impulseIcon from '../assets/impulse_icon.svg';
 
 interface Props {
   filters: Filters | null;
@@ -116,12 +118,72 @@ const EVENT_TYPES: { name: string; desc: string }[] = [
   },
 ];
 
+// Key takeaways shown below the step cards: why this demo is powerful, split into the
+// Databricks-native platform capabilities and Impulse's analytics role.
+const HEADLINE =
+  'One governed platform turns raw sensor data into explainable, safety-relevant insight — ' +
+  'rules for recall, GenAI for precision, a human in the loop.';
+
+const TAKEAWAYS: { icon: string; title: string; bullets: { lead: string; text: string }[] }[] = [
+  {
+    icon: databricksIcon,
+    title: 'Powered by Databricks',
+    bullets: [
+      {
+        lead: 'Lakehouse, end-to-end',
+        text: 'all data + AI verdicts in one Unity-Catalog catalog — no movement, full lineage.',
+      },
+      {
+        lead: 'GenAI built in',
+        text: 'multimodal Foundation Models verify events in-platform.',
+      },
+      {
+        lead: 'Scales with Spark + serverless',
+        text: 'parallel ingest, distributed inference, serverless verification.',
+      },
+      {
+        lead: 'Ships as a product',
+        text: 'Databricks App + SQL warehouse, deployed via Asset Bundles.',
+      },
+    ],
+  },
+  {
+    icon: impulseIcon,
+    title: 'Driven by Impulse',
+    bullets: [
+      {
+        lead: 'Declarative event mining',
+        text: 'safety events as signal logic (TSAL), not bespoke pipelines.',
+      },
+      {
+        lead: 'Built for measurement data',
+        text: 'containers-of-channels model; multi-drive / fleet-native.',
+      },
+      {
+        lead: 'Governed gold layer',
+        text: 'events + stats as fact/dimension tables this app queries.',
+      },
+      {
+        lead: 'The analytics brain',
+        text: 'turns raw channels into queryable events & stats.',
+      },
+    ],
+  },
+];
+
 export default function LandingPage({ onStart }: Props) {
   const [active, setActive] = useState<string | null>(null);
   const [showEvents, setShowEvents] = useState(false);
+  // Latches once the user opens any card, so the attention pulse stops for good.
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [activeTakeaway, setActiveTakeaway] = useState<string | null>(null);
   const activeStep = STEPS.find((s) => s.key === active) ?? null;
+  const activeTake = TAKEAWAYS.find((t) => t.title === activeTakeaway) ?? null;
+  const toggleTakeaway = (title: string) =>
+    setActiveTakeaway((cur) => (cur === title ? null : title));
 
   const toggle = (key: string) => {
+    setHasInteracted(true);
     setActive((cur) => (cur === key ? null : key));
     setShowEvents(false);
   };
@@ -135,39 +197,51 @@ export default function LandingPage({ onStart }: Props) {
           </button>
         </div>
 
-        <h1 className="landing-title">A2D2 Event Explorer</h1>
+        <h1 className="landing-title">Impulse Event Explorer</h1>
 
         <p className="landing-lead">
-          <strong>A2D2</strong> is Audi&apos;s open autonomous-driving dataset. This demo
-          turns <strong>3 real city drives</strong> into explorable, safety-relevant driving
-          events.
+          This demo turns <strong>3 real city drives</strong> of Audi&apos;s{' '}
+          <strong>A2D2</strong> open autonomous-driving dataset into explorable,
+          safety-relevant driving events.
         </p>
 
         <ul className="landing-steps">
-          {STEPS.map((s) => (
-            <li
-              key={s.key}
-              className={`step-card${active === s.key ? ' step-card--active' : ''}`}
-              role="button"
-              tabIndex={0}
-              aria-expanded={active === s.key}
-              onClick={() => toggle(s.key)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  toggle(s.key);
-                }
-              }}
-            >
-              <span className="step-icon" aria-hidden="true">
-                {s.icon}
-              </span>
-              <div className="step-body">
-                <span className="step-verb">{s.verb}</span>
-                <span className="step-desc">{s.desc}</span>
-              </div>
-            </li>
-          ))}
+          {STEPS.map((s) => {
+            const isActive = active === s.key;
+            const pulse = !hasInteracted && s.key === 'ingest';
+            return (
+              <li
+                key={s.key}
+                className={`step-card${isActive ? ' step-card--active' : ''}${
+                  pulse ? ' step-card--pulse' : ''
+                }`}
+                role="button"
+                tabIndex={0}
+                aria-expanded={isActive}
+                onClick={() => toggle(s.key)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggle(s.key);
+                  }
+                }}
+              >
+                <span className="step-icon" aria-hidden="true">
+                  {s.icon}
+                </span>
+                <div className="step-body">
+                  <span className="step-verb">{s.verb}</span>
+                  <span className="step-desc">{s.desc}</span>
+                </div>
+                <span
+                  className={`step-expand${isActive ? ' step-expand--open' : ''}`}
+                  aria-hidden="true"
+                >
+                  ⌄
+                </span>
+              </li>
+            );
+          })}
         </ul>
 
         {activeStep && (
@@ -213,6 +287,53 @@ export default function LandingPage({ onStart }: Props) {
             )}
           </div>
         )}
+
+        <section className="takeaways-wrap">
+          <p className="takeaways-headline">{HEADLINE}</p>
+          <ul className="takeaway-cards">
+            {TAKEAWAYS.map((g) => {
+              const isActive = activeTakeaway === g.title;
+              return (
+                <li
+                  key={g.title}
+                  className={`takeaway-card${isActive ? ' takeaway-card--active' : ''}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isActive}
+                  onClick={() => toggleTakeaway(g.title)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleTakeaway(g.title);
+                    }
+                  }}
+                >
+                  <img className="takeaway-icon-img" src={g.icon} alt="" aria-hidden="true" />
+                  <span className="takeaway-title">{g.title}</span>
+                  <span
+                    className={`step-expand${isActive ? ' step-expand--open' : ''}`}
+                    aria-hidden="true"
+                  >
+                    ⌄
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+
+          {activeTake && (
+            <div className="takeaway-detail" key={activeTake.title}>
+              <div className="takeaway-features">
+                {activeTake.bullets.map((b) => (
+                  <div className="takeaway-feature" key={b.lead}>
+                    <span className="feature-lead">{b.lead}</span>
+                    <span className="feature-text">{b.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
 
         <p className="landing-footer">
           {!activeStep && (

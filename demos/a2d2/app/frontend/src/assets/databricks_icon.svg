@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <defs>
+    <linearGradient id="dbBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1B3A4B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2D5F7A;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background (matches the Impulse icon style) -->
+  <rect x="0" y="0" width="80" height="80" rx="16" ry="16" fill="url(#dbBg)"/>
+
+  <!-- Official Databricks mark, centered on the dark tile -->
+  <g transform="translate(16,16) scale(2.6667)">
+    <path d="M1.155,4.93v.512L9,9.868l7.006-3.957,0,1.6L9,11.491,1.55,7.258l-.395.22V10.54L9,14.955l7.006-3.942,0,1.586L9,16.581,1.55,12.347l-.395.22v.519L9,17.5l7.845-4.414V10.021l-.4-.218L9,14.036,1.992,10.054V8.476L9,12.414,16.845,8V4.978l-.4-.219L9,8.993,2.352,5.215,9,1.46l5.476,3.094.479-.269V3.863L9,.5Z" fill="#ff3621"/>
+  </g>
+</svg>

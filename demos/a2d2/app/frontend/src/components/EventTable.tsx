@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { EventRow, cssColor, fmtTs } from '../api';
+import { EventRow, cssColor, fmtTsShort } from '../api';
 
 interface Props {
   events: EventRow[];
@@ -88,7 +88,7 @@ export default function EventTable({ events, selected, onSelect }: Props) {
                 </td>
                 <td>{e.city ?? '—'}</td>
                 <td>{e.vehicle ?? '—'}</td>
-                <td className="ts">{fmtTs(e.start_ts)}</td>
+                <td className="ts">{fmtTsShort(e.start_ts)}</td>
                 <td>{verdictBadge(e)}</td>
                 <td>{e.has_clip ? '🎬' : ''}</td>
               </tr>

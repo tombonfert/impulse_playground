@@ -110,7 +110,7 @@ export default function App() {
         >
           ← Overview
         </button>
-        <span className="brand">A2D2 Event Explorer</span>
+        <span className="brand">Impulse Event Explorer</span>
         <span className="sub">
           {loading ? 'loading…' : `${eventCount} events · ${clipCount} with clips`}
         </span>

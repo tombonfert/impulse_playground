@@ -1,4 +1,5 @@
 import { Filters, fmtTs } from '../api';
+import MultiSelect from './MultiSelect';
 
 export interface SelectedFilters {
   vehicle: string[];
@@ -16,36 +17,10 @@ interface Props {
   onChange: (s: SelectedFilters) => void;
 }
 
-function multiValues(e: React.ChangeEvent<HTMLSelectElement>): string[] {
-  return Array.from(e.target.selectedOptions).map((o) => o.value);
-}
-
 export default function FilterSidebar({ filters, selected, onChange }: Props) {
   if (!filters) return <aside className="sidebar">Loading filters…</aside>;
 
   const set = (patch: Partial<SelectedFilters>) => onChange({ ...selected, ...patch });
-
-  const Multi = (
-    label: string,
-    key: keyof SelectedFilters,
-    options: string[],
-  ) => (
-    <div className="filter-group">
-      <label>{label}</label>
-      <select
-        multiple
-        size={Math.min(Math.max(options.length, 2), 6)}
-        value={selected[key] as string[]}
-        onChange={(e) => set({ [key]: multiValues(e) } as Partial<SelectedFilters>)}
-      >
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
 
   const min = filters.min_ts ?? 0;
   const max = filters.max_ts ?? 0;
@@ -54,10 +29,30 @@ export default function FilterSidebar({ filters, selected, onChange }: Props) {
   return (
     <aside className="sidebar">
       <h3>Filters</h3>
-      {Multi('Vehicle', 'vehicle', filters.vehicles)}
-      {Multi('City', 'city', filters.cities)}
-      {Multi('Event name', 'event_name', filters.event_names)}
-      {Multi('Event type', 'event_type', filters.event_types)}
+      <MultiSelect
+        label="Vehicle"
+        options={filters.vehicles}
+        selected={selected.vehicle}
+        onChange={(v) => set({ vehicle: v })}
+      />
+      <MultiSelect
+        label="City"
+        options={filters.cities}
+        selected={selected.city}
+        onChange={(v) => set({ city: v })}
+      />
+      <MultiSelect
+        label="Event name"
+        options={filters.event_names}
+        selected={selected.event_name}
+        onChange={(v) => set({ event_name: v })}
+      />
+      <MultiSelect
+        label="Event type"
+        options={filters.event_types}
+        selected={selected.event_type}
+        onChange={(v) => set({ event_type: v })}
+      />
 
       <div className="filter-group">
         <label className="check-row">
