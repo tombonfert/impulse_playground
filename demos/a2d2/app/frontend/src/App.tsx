@@ -102,6 +102,13 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
+        <button
+          className="back-btn"
+          onClick={() => setView('landing')}
+          title="Back to the overview"
+        >
+          ← Overview
+        </button>
         <span className="brand">A2D2 Event Explorer</span>
         <span className="sub">
           {loading ? 'loading…' : `${eventCount} events · ${clipCount} with clips`}

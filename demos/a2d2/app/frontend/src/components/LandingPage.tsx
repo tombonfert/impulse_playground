@@ -8,7 +8,7 @@ interface Props {
   onStart: () => void;
 }
 
-type Kpi = { value: string; label: string };
+type Kpi = { value: string; label: string; expands?: boolean };
 type Step = {
   key: string;
   icon: string;
@@ -27,7 +27,7 @@ const STEPS: Step[] = [
     verb: 'Ingest',
     desc: 'Bus signals + front-camera images into the Impulse time-series framework',
     detail:
-      'Front-camera images and the vehicle-bus signals from 3 real city drives are loaded into Impulse — images as frames, every bus signal as its own time-series channel, all aligned on a common timeline.',
+      'Front-camera images and the vehicle-bus signals from 3 real city drives are loaded into Impulse — images as frames, every bus signal as its own time-series channel.',
     kpis: [
       { value: '~231 GB', label: 'raw input' },
       { value: '65,371', label: 'camera frames' },
@@ -57,7 +57,7 @@ const STEPS: Step[] = [
     detail:
       'Tail-calibrated rules over the bus + perception channels surface safety-relevant events, compute within-event statistics for each one, and export a short video clip per event.',
     kpis: [
-      { value: '7', label: 'event types' },
+      { value: '7', label: 'event types', expands: true },
       { value: '85', label: 'events found' },
       { value: '63', label: 'video clips' },
       { value: '≤10 s', label: 'clip length' },
@@ -79,11 +79,47 @@ const STEPS: Step[] = [
   },
 ];
 
+// The 7 mined event types, revealed when the "event types" KPI is clicked.
+const EVENT_TYPES: { name: string; desc: string }[] = [
+  {
+    name: 'Emergency braking',
+    desc: 'Hard deceleration while driving — excludes simply holding the brake at a standstill.',
+  },
+  {
+    name: 'Imminent rear-end',
+    desc: 'Following the in-path lead vehicle too closely — dangerously short time-headway.',
+  },
+  {
+    name: 'Pedestrian in path',
+    desc: 'A pedestrian directly ahead in the ego lane, at close range.',
+  },
+  {
+    name: 'Pedestrian near-miss',
+    desc: 'A pedestrian passes close to the car while it is moving at speed.',
+  },
+  {
+    name: 'Cyclist close encounter',
+    desc: 'A cyclist passes within a few metres — typically a close side pass.',
+  },
+  {
+    name: 'Sharp cornering',
+    desc: 'Aggressive steering at speed — a tight, fast turn.',
+  },
+  {
+    name: 'Evasive maneuver',
+    desc: 'A sudden steer-and-brake combination, typical of dodging an obstacle.',
+  },
+];
+
 export default function LandingPage({ onStart }: Props) {
   const [active, setActive] = useState<string | null>(null);
+  const [showEvents, setShowEvents] = useState(false);
   const activeStep = STEPS.find((s) => s.key === active) ?? null;
 
-  const toggle = (key: string) => setActive((cur) => (cur === key ? null : key));
+  const toggle = (key: string) => {
+    setActive((cur) => (cur === key ? null : key));
+    setShowEvents(false);
+  };
 
   return (
     <div className="landing">
@@ -139,13 +175,37 @@ export default function LandingPage({ onStart }: Props) {
             </div>
             <p className="step-detail-text">{activeStep.detail}</p>
             <div className="step-kpis">
-              {activeStep.kpis.map((k) => (
-                <div className="step-kpi" key={k.label}>
-                  <span className="step-kpi-value">{k.value}</span>
-                  <span className="step-kpi-label">{k.label}</span>
-                </div>
-              ))}
+              {activeStep.kpis.map((k) =>
+                k.expands ? (
+                  <button
+                    key={k.label}
+                    className={`step-kpi step-kpi--btn${showEvents ? ' step-kpi--open' : ''}`}
+                    onClick={() => setShowEvents((v) => !v)}
+                    aria-expanded={showEvents}
+                  >
+                    <span className="step-kpi-value">{k.value}</span>
+                    <span className="step-kpi-label">
+                      {k.label} {showEvents ? '▴' : '▾'}
+                    </span>
+                  </button>
+                ) : (
+                  <div className="step-kpi" key={k.label}>
+                    <span className="step-kpi-value">{k.value}</span>
+                    <span className="step-kpi-label">{k.label}</span>
+                  </div>
+                ),
+              )}
             </div>
+            {activeStep.key === 'mine' && showEvents && (
+              <div className="event-types">
+                {EVENT_TYPES.map((ev) => (
+                  <div className="event-card" key={ev.name}>
+                    <span className="event-name">{ev.name}</span>
+                    <span className="event-desc">{ev.desc}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

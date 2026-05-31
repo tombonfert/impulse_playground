@@ -41,6 +41,20 @@ body {
   background: var(--panel);
   border-bottom: 1px solid var(--border);
 }
+.back-btn {
+  background: var(--panel2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.back-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .brand {
   font-weight: 700;
   font-size: 15px;
@@ -490,6 +504,51 @@ table.stats td.num {
   font-size: 11.5px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+/* A KPI that drills down (e.g. "event types") — rendered as a clickable button. */
+.step-kpi--btn {
+  font: inherit;
+  color: inherit;
+  align-items: flex-start;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.step-kpi--btn:hover {
+  border-color: var(--accent);
+}
+.step-kpi--open {
+  border-color: var(--accent);
+  background: rgba(74, 158, 255, 0.1);
+}
+
+/* Drill-down grid of the 7 event types. */
+.event-types {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  animation: step-detail-in 0.18s ease;
+}
+.event-card {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.event-name {
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--text);
+}
+.event-desc {
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.4;
 }
 
 /* Data-source credit: de-emphasized, dimmer than the body text. */
