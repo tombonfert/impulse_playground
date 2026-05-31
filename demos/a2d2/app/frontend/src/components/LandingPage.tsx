@@ -53,14 +53,19 @@ const STEPS: Step[] = [
     key: 'mine',
     icon: '⚠️',
     verb: 'Mine',
-    desc: 'Safety events: hard braking, pedestrian-in-path, close following, evasive maneuvers',
+    desc: 'Rule-based event detection + GenAI verification',
     detail:
-      'Tail-calibrated rules over the bus + perception channels surface safety-relevant events, compute within-event statistics for each one, and export a short video clip per event.',
+      'Two stages. First, tail-calibrated rules over the bus + perception channels flag candidate ' +
+      'safety events (hard braking, pedestrian-in-path, close following, evasive maneuvers) and ' +
+      'compute within-event statistics. Then a multimodal LLM reviews each event’s camera frames ' +
+      'and telemetry and judges whether it is genuinely the event of interest or a false positive — ' +
+      'attaching a confidence and a one-line reason. The rules give high recall; the LLM gives ' +
+      'precision and an auditable explanation.',
     kpis: [
       { value: '7', label: 'event types', expands: true },
-      { value: '85', label: 'events found' },
-      { value: '63', label: 'video clips' },
-      { value: '≤10 s', label: 'clip length' },
+      { value: '85 → 38', label: 'candidates → verified' },
+      { value: '47', label: 'false positives caught' },
+      { value: 'Claude Opus 4.8', label: 'vision-model judge' },
     ],
   },
   {
