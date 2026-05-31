@@ -32,7 +32,7 @@ variables:
     default: "true"
   extract_partitions:
     description: Parallel Spark tasks for the index-free camera-tar untar.
-    default: "32"
+    default: "64"
   clip_max_duration_s:
     description: Max seconds of footage per event MP4 clip (analysis notebook).
     default: "5"
@@ -73,9 +73,12 @@ artifacts:
 resources:
   jobs:
     a2d2_ingestion:
-      name: "[A2D2] bus + camera ingestion"
+      name: "[A2D2] bus + camera ingestion (3 drives)"
+      # One drive per task = one container, run SEQUENTIALLY (depends_on chain) so the per-container
+      # appends to the shared Delta silver tables never collide. skip_download_if_present is now
+      # container-scoped (per-drive subfolders), so re-runs skip already-ingested drives.
       tasks:
-        - task_key: ingest
+        - task_key: ingest_munich
           notebook_task:
             notebook_path: ./a2d2_ingestion.ipynb
             base_parameters:
@@ -85,8 +88,53 @@ resources:
               volume: ${var.volume}
               download_images: ${var.download_images}
               extract_partitions: ${var.extract_partitions}
-              skip_download_if_present: "false"
+              skip_download_if_present: "true"
               drop_created_tables: "false"
+              container_id: "1"
+              city: "Munich"
+              recording: "20190401_121727"
+              bus_url: "https://aev-autonomous-driving-dataset.s3.eu-central-1.amazonaws.com/camera_lidar-20190401121727_bus_signals.tar"
+              cam_url: "https://aev-autonomous-driving-dataset.s3.eu-central-1.amazonaws.com/camera_lidar-20190401121727_camera_frontcenter.tar"
+          environment_key: default
+        - task_key: ingest_gaimersheim
+          depends_on:
+            - task_key: ingest_munich
+          notebook_task:
+            notebook_path: ./a2d2_ingestion.ipynb
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              table_prefix: ${var.table_prefix}
+              volume: ${var.volume}
+              download_images: ${var.download_images}
+              extract_partitions: ${var.extract_partitions}
+              skip_download_if_present: "true"
+              drop_created_tables: "false"
+              container_id: "2"
+              city: "Gaimersheim"
+              recording: "20180810_150607"
+              bus_url: "https://aev-autonomous-driving-dataset.s3.eu-central-1.amazonaws.com/camera_lidar-20180810150607_bus_signals.tar"
+              cam_url: "https://aev-autonomous-driving-dataset.s3.eu-central-1.amazonaws.com/camera_lidar-20180810150607_camera_frontcenter.tar"
+          environment_key: default
+        - task_key: ingest_ingolstadt
+          depends_on:
+            - task_key: ingest_gaimersheim
+          notebook_task:
+            notebook_path: ./a2d2_ingestion.ipynb
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              table_prefix: ${var.table_prefix}
+              volume: ${var.volume}
+              download_images: ${var.download_images}
+              extract_partitions: ${var.extract_partitions}
+              skip_download_if_present: "true"
+              drop_created_tables: "false"
+              container_id: "3"
+              city: "Ingolstadt"
+              recording: "20190401_145936"
+              bus_url: "https://aev-autonomous-driving-dataset.s3.eu-central-1.amazonaws.com/camera_lidar-20190401145936_bus_signals.tar"
+              cam_url: "https://aev-autonomous-driving-dataset.s3.eu-central-1.amazonaws.com/camera_lidar-20190401145936_camera_frontcenter.tar"
           environment_key: default
       environments:
         - environment_key: default
