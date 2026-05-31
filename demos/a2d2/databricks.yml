@@ -51,6 +51,9 @@ variables:
   frames_per_second:
     description: Temporally downsample detection to this many frames/sec (0 = all frames).
     default: "1"
+  ahead_center_frac:
+    description: Center-ahead band width as a fraction of image width (smaller = stricter "in path").
+    default: "0.34"
   detect_repartitions:
     description: Spark partitions for distributed inference (match the cluster's core count).
     default: "32"
@@ -131,6 +134,7 @@ resources:
               detect_model: ${var.detect_model}
               detect_score_threshold: ${var.detect_score_threshold}
               frames_per_second: ${var.frames_per_second}
+              ahead_center_frac: ${var.ahead_center_frac}
               detect_repartitions: ${var.detect_repartitions}
               estimate_distance: ${var.estimate_distance}
               depth_model: ${var.depth_model}
