@@ -69,6 +69,18 @@ variables:
   depth_model:
     description: HuggingFace metric-depth model id (Depth Anything V2 metric).
     default: depth-anything/Depth-Anything-V2-Metric-Outdoor-Small-hf
+  verify_model:
+    description: Multimodal serving endpoint used by the VLM-as-judge event verifier.
+    default: databricks-claude-opus-4-8
+  frames_per_event:
+    description: Frames sent to the judge per event in the verification notebook.
+    default: "3"
+  verify_window_s:
+    description: Max seconds from an event's start to sample verification frames from.
+    default: "6"
+  verify_limit:
+    description: Verify at most N events (0 = all; >0 for smoke tests).
+    default: "0"
 
 artifacts:
   impulse_wheel:
@@ -190,6 +202,33 @@ resources:
               clip_max_duration_s: ${var.clip_max_duration_s}
               clip_fps: ${var.clip_fps}
               clips_per_event: ${var.clips_per_event}
+          environment_key: default
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "5"
+            dependencies:
+              - ./dist/databricks_impulse-*.whl
+
+    # Event verification (VLM-as-judge). Reads the event facts + camera frames, sends a few frames
+    # per event to a multimodal serving endpoint with an event-specific rubric, and writes a
+    # relevance verdict per event instance to {prefix}_event_verification_fact. Runs serverless:
+    # inference is offloaded to the serving endpoint, so there is no local model / OOM concern.
+    a2d2_event_verification:
+      name: "[A2D2] event verification (VLM-as-judge)"
+      tasks:
+        - task_key: verify
+          notebook_task:
+            notebook_path: ./a2d2_event_verification.ipynb
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              table_prefix: ${var.table_prefix}
+              volume: ${var.volume}
+              verify_model: ${var.verify_model}
+              frames_per_event: ${var.frames_per_event}
+              verify_window_s: ${var.verify_window_s}
+              verify_limit: ${var.verify_limit}
           environment_key: default
       environments:
         - environment_key: default

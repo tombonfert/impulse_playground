@@ -57,6 +57,29 @@ def _clip_name(event_name: str, cid: int, eiid: int) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# Verification table presence (it may not exist until the verify job has run).
+# Cached so we don't probe on every request.
+# --------------------------------------------------------------------------- #
+_verify_cache: dict[str, float | bool] = {"ts": 0.0, "exists": False}
+_VERIFY_TTL = 300  # seconds
+
+
+def _verify_table_exists() -> bool:
+    now = time.time()
+    if now - _verify_cache["ts"] < _VERIFY_TTL and _verify_cache["ts"] > 0:
+        return bool(_verify_cache["exists"])
+    exists = False
+    try:
+        query(f"SELECT 1 FROM {config.table('event_verification_fact')} LIMIT 1", {})
+        exists = True
+    except Exception:
+        exists = False
+    _verify_cache["ts"] = now
+    _verify_cache["exists"] = exists
+    return exists
+
+
+# --------------------------------------------------------------------------- #
 # API
 # --------------------------------------------------------------------------- #
 @app.get("/api/health")
@@ -114,12 +137,15 @@ def events(
     event_type: str | None = None,
     start_ts: int | None = None,
     end_ts: int | None = None,
+    verified_only: bool = False,
 ):
     fact = config.table("event_instance_fact")
     dim = config.table("event_dimension")
     tags = config.table("container_tags")
     chtags = config.table("channel_tags")
     channels = config.table("channels")
+    vfact = config.table("event_verification_fact")
+    has_vf = _verify_table_exists()
 
     where = ["1=1"]
     params: dict[str, object] = {}
@@ -146,6 +172,20 @@ def events(
         where.append("f.start_ts <= :end_ts")
 
     where_sql = " AND ".join(where)
+
+    # Verification verdict columns/join (only if the verify job has produced the table).
+    if has_vf:
+        vf_cols = ("vf.is_relevant AS is_relevant, vf.confidence AS relevance_score, "
+                   "vf.reason AS relevance_reason")
+        vf_join = (f"LEFT JOIN {vfact} vf ON vf.container_id = ev.container_id "
+                   "AND vf.event_instance_id = ev.event_instance_id")
+        vf_where = "WHERE vf.is_relevant = true" if verified_only else ""
+    else:
+        vf_cols = ("CAST(NULL AS BOOLEAN) AS is_relevant, "
+                   "CAST(NULL AS DOUBLE) AS relevance_score, "
+                   "CAST(NULL AS STRING) AS relevance_reason")
+        vf_join = ""
+        vf_where = ""
 
     # Resolve lat/lon channel ids dynamically per container, then pick, for each
     # event, the channel sample nearest its start_ts. Spark SQL does NOT allow a
@@ -198,7 +238,8 @@ def events(
       ev.container_id, ev.event_instance_id, ev.event_name, ev.event_type,
       ev.city, ev.vehicle, ev.start_ts, ev.end_ts,
       nlat.lat AS lat,
-      nlon.lon AS lon
+      nlon.lon AS lon,
+      {vf_cols}
     FROM ev
     LEFT JOIN nearest_lat nlat
       ON nlat.container_id = ev.container_id
@@ -206,6 +247,8 @@ def events(
     LEFT JOIN nearest_lon nlon
       ON nlon.container_id = ev.container_id
      AND nlon.event_instance_id = ev.event_instance_id
+    {vf_join}
+    {vf_where}
     ORDER BY ev.start_ts
     """
     rows = query(sql, params)
@@ -218,6 +261,11 @@ def events(
         r["lat"] = float(r["lat"]) if r["lat"] is not None else None
         r["lon"] = float(r["lon"]) if r["lon"] is not None else None
         r["has_clip"] = _clip_name(r["event_name"], r["container_id"], r["event_instance_id"]) in clips
+        r["is_relevant"] = bool(r["is_relevant"]) if r.get("is_relevant") is not None else None
+        r["relevance_score"] = (
+            float(r["relevance_score"]) if r.get("relevance_score") is not None else None
+        )
+        r["relevance_reason"] = r.get("relevance_reason")
     return rows
 
 

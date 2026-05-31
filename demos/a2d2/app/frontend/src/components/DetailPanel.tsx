@@ -96,6 +96,19 @@ export default function DetailPanel({ event }: Props) {
         </div>
       </div>
 
+      {event.is_relevant != null && (
+        <div className={`verdict-box ${event.is_relevant ? 'verdict-yes' : 'verdict-no'}`}>
+          <div className="verdict-head">
+            {event.is_relevant ? '✓ Relevant' : '⚠ Likely false positive'}
+            {event.relevance_score != null && (
+              <span className="verdict-conf">confidence {event.relevance_score.toFixed(2)}</span>
+            )}
+          </div>
+          {event.relevance_reason && <div className="verdict-reason">{event.relevance_reason}</div>}
+          <div className="verdict-src">AI verification (vision model)</div>
+        </div>
+      )}
+
       {event.has_clip ? (
         <video
           key={`${event.container_id}-${event.event_instance_id}`}

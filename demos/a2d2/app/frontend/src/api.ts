@@ -21,6 +21,10 @@ export interface EventRow {
   lat: number | null;
   lon: number | null;
   has_clip: boolean;
+  // VLM-as-judge relevance verdict (null until the verification job has run).
+  is_relevant: boolean | null;
+  relevance_score: number | null;
+  relevance_reason: string | null;
 }
 
 // stats rows are pivoted: {channel_name, <agg_label>: number, ...}
@@ -36,6 +40,7 @@ export interface EventQuery {
   event_type?: string[];
   start_ts?: number | null;
   end_ts?: number | null;
+  verified_only?: boolean;
 }
 
 async function getJSON<T>(url: string): Promise<T> {
@@ -59,6 +64,7 @@ export function fetchEvents(q: EventQuery): Promise<EventRow[]> {
   csv('event_type', q.event_type);
   if (q.start_ts != null) p.set('start_ts', String(q.start_ts));
   if (q.end_ts != null) p.set('end_ts', String(q.end_ts));
+  if (q.verified_only) p.set('verified_only', 'true');
   const qs = p.toString();
   return getJSON<EventRow[]>(`/api/events${qs ? `?${qs}` : ''}`);
 }

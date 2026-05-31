@@ -20,6 +20,7 @@ const EMPTY: SelectedFilters = {
   event_type: [],
   start_ts: null,
   end_ts: null,
+  verified_only: false,
 };
 
 export default function App() {

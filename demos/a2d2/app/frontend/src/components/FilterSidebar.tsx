@@ -7,6 +7,7 @@ export interface SelectedFilters {
   event_type: string[];
   start_ts: number | null;
   end_ts: number | null;
+  verified_only: boolean;
 }
 
 interface Props {
@@ -58,6 +59,17 @@ export default function FilterSidebar({ filters, selected, onChange }: Props) {
       {Multi('Event name', 'event_name', filters.event_names)}
       {Multi('Event type', 'event_type', filters.event_types)}
 
+      <div className="filter-group">
+        <label className="check-row">
+          <input
+            type="checkbox"
+            checked={selected.verified_only}
+            onChange={(e) => set({ verified_only: e.target.checked })}
+          />
+          <span>Verified only</span>
+        </label>
+      </div>
+
       {hasRange && (
         <div className="filter-group">
           <label>Time range</label>
@@ -100,6 +112,7 @@ export default function FilterSidebar({ filters, selected, onChange }: Props) {
             event_type: [],
             start_ts: filters.min_ts,
             end_ts: filters.max_ts,
+            verified_only: false,
           })
         }
       >

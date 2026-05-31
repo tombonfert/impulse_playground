@@ -7,6 +7,21 @@ interface Props {
   onSelect: (e: EventRow) => void;
 }
 
+// Relevance verdict chip from the VLM-as-judge. Hover shows the model's reason.
+export function verdictBadge(e: EventRow) {
+  if (e.is_relevant == null) {
+    return <span className="verdict verdict-unknown" title="Not verified yet">—</span>;
+  }
+  const conf = e.relevance_score != null ? e.relevance_score.toFixed(2) : '';
+  const cls = e.is_relevant ? 'verdict verdict-yes' : 'verdict verdict-no';
+  const icon = e.is_relevant ? '✓' : '⚠';
+  return (
+    <span className={cls} title={e.relevance_reason ?? ''}>
+      {icon} {conf}
+    </span>
+  );
+}
+
 type SortKey = 'event_name' | 'city' | 'vehicle' | 'start_ts';
 
 export default function EventTable({ events, selected, onSelect }: Props) {
@@ -51,6 +66,7 @@ export default function EventTable({ events, selected, onSelect }: Props) {
             {header('City', 'city')}
             {header('Vehicle', 'vehicle')}
             {header('Start', 'start_ts')}
+            <th>Verdict</th>
             <th>Clip</th>
           </tr>
         </thead>
@@ -73,13 +89,14 @@ export default function EventTable({ events, selected, onSelect }: Props) {
                 <td>{e.city ?? '—'}</td>
                 <td>{e.vehicle ?? '—'}</td>
                 <td className="ts">{fmtTs(e.start_ts)}</td>
+                <td>{verdictBadge(e)}</td>
                 <td>{e.has_clip ? '🎬' : ''}</td>
               </tr>
             );
           })}
           {sorted.length === 0 && (
             <tr>
-              <td colSpan={5} className="empty">
+              <td colSpan={6} className="empty">
                 No events match the current filters.
               </td>
             </tr>
