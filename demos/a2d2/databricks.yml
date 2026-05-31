@@ -105,9 +105,9 @@ resources:
       max_num_clusters: 1
 
   apps:
-    a2d2_explorer:
-      name: a2d2-event-explorer
-      description: "A2D2 event explorer — map + clips + channel stats over the silver tables."
+    impulse_explorer:
+      name: impulse-event-explorer
+      description: "Impulse Event Explorer — map + clips + channel stats + AI verdicts over the silver tables."
       source_code_path: ./app
       resources:
         - name: sql-warehouse
