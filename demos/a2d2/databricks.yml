@@ -1,16 +1,19 @@
-# Databricks Asset Bundle for the A2D2 demo (ingestion + analysis).
-#
-# Deploy both notebooks as serverless Databricks jobs:
+# Databricks Asset Bundle for the A2D2 ADAS demo (Impulse Event Explorer).
+# Full pipeline + app — see README.md.
 #
 #   cd demos/a2d2
+#   ( cd app/frontend && npm install && npm run build )      # build the React app first
 #   databricks bundle deploy  -t dev -p <your-profile>
-#   databricks bundle run a2d2_ingestion        -t dev -p <your-profile>  # 1) download + ingest
-#   databricks bundle run a2d2_object_detection -t dev -p <your-profile>  # 2) detect -> channels
-#   databricks bundle run a2d2_analysis         -t dev -p <your-profile>  # 3) events + MP4 clips
+#   databricks bundle run a2d2_ingestion          -t dev -p <your-profile>  # 1) download + ingest (3 drives)
+#   databricks bundle run a2d2_object_detection   -t dev -p <your-profile>  # 2) detection + depth -> channels
+#   databricks bundle run a2d2_analysis           -t dev -p <your-profile>  # 3) events + stats + MP4 clips
+#   databricks bundle run a2d2_event_verification -t dev -p <your-profile>  # 4) GenAI relevance verdicts
+#   databricks bundle run impulse_explorer        -t dev -p <your-profile>  # 5) (re)deploy the app
 #
-# The impulse package is built from the repo root (../..) into ./dist as a wheel and
-# installed on the serverless jobs, so `import impulse_*` works without the repo being on
-# the workspace sys.path. Override any widget via a bundle variable, e.g.:
+# Detection runs on a classic ML cluster (defined below); the other jobs are serverless.
+# The impulse package is built from the repo root (../..) into ./dist as a wheel and installed on the
+# jobs, so `import impulse_*` works without the repo being on the workspace sys.path. Override any
+# widget via a bundle variable, e.g.:
 #
 #   databricks bundle run a2d2_ingestion -t dev -p <profile> \
 #       --var="catalog=my_catalog,schema=my_schema,download_images=false"
