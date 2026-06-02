@@ -27,6 +27,9 @@ sync:
     - app/frontend/dist/**
 
 variables:
+  app_suffix:
+    description: Suffix for the Databricks App name (use your username or initials to avoid conflicts).
+    default: dev
   catalog:
     description: Unity Catalog catalog for the silver tables and download volume.
     default: main
@@ -109,7 +112,7 @@ resources:
 
   apps:
     impulse_explorer:
-      name: impulse-event-explorer
+      name: a2d2-explorer-${var.app_suffix}
       description: "Impulse Event Explorer — map + clips + channel stats + AI verdicts over the silver tables."
       source_code_path: ./app
       resources:
