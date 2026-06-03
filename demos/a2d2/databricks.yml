@@ -1,16 +1,17 @@
 # Databricks Asset Bundle for the A2D2 ADAS demo (Impulse Event Explorer).
-# Full pipeline + app — see README.md.
+# Full pipeline + app - see README.md.
 #
 #   cd demos/a2d2
 #   ( cd app/frontend && npm install && npm run build )      # build the React app first
 #   databricks bundle deploy  -t dev -p <your-profile>
 #   databricks bundle run a2d2_ingestion          -t dev -p <your-profile>  # 1) download + ingest (3 drives)
 #   databricks bundle run a2d2_object_detection   -t dev -p <your-profile>  # 2) detection + depth -> channels
-#   databricks bundle run a2d2_analysis           -t dev -p <your-profile>  # 3) events + stats + MP4 clips
-#   databricks bundle run a2d2_event_verification -t dev -p <your-profile>  # 4) GenAI relevance verdicts
-#   databricks bundle run impulse_explorer        -t dev -p <your-profile>  # 5) (re)deploy the app
+#   databricks bundle run a2d2_object_tracking    -t dev -p <your-profile>  # 3) ByteTrack tracking -> entity IDs
+#   databricks bundle run a2d2_analysis           -t dev -p <your-profile>  # 4) events + stats + MP4 clips
+#   databricks bundle run a2d2_event_verification -t dev -p <your-profile>  # 5) GenAI relevance verdicts
+#   databricks bundle run impulse_explorer        -t dev -p <your-profile>  # 6) (re)deploy the app
 #
-# Detection runs on a classic ML cluster (defined below); the other jobs are serverless.
+# Detection runs on a classic ML cluster (defined below); tracking and other jobs are serverless.
 # The impulse package is built from the repo root (../..) into ./dist as a wheel and installed on the
 # jobs, so `import impulse_*` works without the repo being on the workspace sys.path. Override any
 # widget via a bundle variable, e.g.:
@@ -87,6 +88,16 @@ variables:
   verify_limit:
     description: Verify at most N events (0 = all; >0 for smoke tests).
     default: "0"
+  # ByteTrack tracking parameters
+  track_thresh:
+    description: ByteTrack confidence threshold for track initialization.
+    default: "0.5"
+  match_thresh:
+    description: ByteTrack IoU threshold for matching detections to tracks.
+    default: "0.8"
+  track_buffer:
+    description: Frames to keep lost tracks before deletion.
+    default: "30"
 
 artifacts:
   impulse_wheel:
@@ -243,10 +254,10 @@ resources:
             dependencies:
               - ./dist/databricks_impulse-*.whl
 
-    # Object detection -> silver channels. Standalone job for now; once proven it can be
-    # folded into a2d2_ingestion as a `detect` task with `depends_on: [{task_key: ingest}]`.
+    # Object detection -> silver channels.
+    # Runs detection and depth estimation; produces bounding boxes in the staging table.
     a2d2_object_detection:
-      name: "[A2D2] object detection -> channels"
+      name: "[A2D2] object detection + depth -> channels"
       tasks:
         - task_key: detect
           notebook_task:
@@ -271,7 +282,7 @@ resources:
           # (mapInPandas/applyInPandas) and FUSE volume reads.
           new_cluster:
             # ML runtime (torch + torchvision + pillow preinstalled, version-matched) on a
-            # single-user classic cluster. The notebook only pip-installs transformers.
+            # single-user classic cluster. The notebook pip-installs transformers.
             spark_version: "17.3.x-cpu-ml-scala2.13"
             node_type_id: r5d.2xlarge
             num_workers: 4          # 4 x r5d.2xlarge (8 cores) = 32 worker cores
@@ -286,6 +297,30 @@ resources:
           libraries:
             - whl: ./dist/databricks_impulse-*.whl
 
+    # Object tracking (ByteTrack) -> tracking_fact table.
+    # Runs on serverless (supervision works there but not on classic ML clusters).
+    a2d2_object_tracking:
+      name: "[A2D2] object tracking (ByteTrack) -> entity IDs"
+      tasks:
+        - task_key: track
+          notebook_task:
+            notebook_path: ./a2d2_object_tracking.ipynb
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              table_prefix: ${var.table_prefix}
+              volume: ${var.volume}
+              track_thresh: ${var.track_thresh}
+              match_thresh: ${var.match_thresh}
+              track_buffer: ${var.track_buffer}
+          environment_key: default
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "5"
+            dependencies:
+              - ./dist/databricks_impulse-*.whl
+
 targets:
   dev:
     mode: development
@@ -298,4 +333,4 @@ targets:
       catalog: mda_demo
       detect_model: ssdlite320_mobilenet_v3_large
       estimate_distance: "true"
-      frames_per_second: "1"
+      frames_per_second: "5"
