@@ -63,7 +63,7 @@ variables:
     default: "0.5"
   frames_per_second:
     description: Temporally downsample detection to this many frames/sec (0 = all frames).
-    default: "1"
+    default: "5"
   ahead_center_frac:
     description: Center-ahead band width as a fraction of image width (smaller = stricter "in path").
     default: "0.34"
@@ -333,4 +333,3 @@ targets:
       catalog: mda_demo
       detect_model: ssdlite320_mobilenet_v3_large
       estimate_distance: "true"
-      frames_per_second: "5"
