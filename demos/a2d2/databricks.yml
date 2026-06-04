@@ -63,7 +63,7 @@ variables:
     default: "0.5"
   frames_per_second:
     description: Temporally downsample detection to this many frames/sec (0 = all frames).
-    default: "5"
+    default: "10"
   ahead_center_frac:
     description: Center-ahead band width as a fraction of image width (smaller = stricter "in path").
     default: "0.34"

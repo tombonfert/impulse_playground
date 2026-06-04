@@ -94,7 +94,7 @@ values (catalog, detector model, etc.); override any variable per run with
 | `catalog`, `schema`, `table_prefix`, `volume` | `main` / `a2d2_demo` / `a2d2` / `a2d2_raw` | all |
 | `extract_partitions` | `64` | ingestion (parallel untar) |
 | `detect_model` / `depth_model` / `estimate_distance` | SSDlite / Depth-Anything-V2 / `true` | detection |
-| `frames_per_second` | `5` | detection (temporal subsampling) |
+| `frames_per_second` | `10` | detection (temporal subsampling) |
 | `track_thresh` / `match_thresh` / `track_buffer` | `0.5` / `0.8` / `30` | tracking (ByteTrack params) |
 | `ahead_center_frac` | `0.34` | detection (in-path band width) |
 | `clip_max_duration_s` / `clip_fps` / `clips_per_event` | `10` / `5` / `5` | analysis (clips) |
