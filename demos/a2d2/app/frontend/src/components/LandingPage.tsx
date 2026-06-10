@@ -356,6 +356,21 @@ export default function LandingPage({ onStart }: Props) {
             </a>
             .
           </span>
+          <span className="footer-sep" aria-hidden="true">
+            ·
+          </span>
+          <span className="landing-source">
+            Built with{' '}
+            <a
+              className="landing-link-muted"
+              href="https://github.com/databrickslabs/impulse"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Impulse
+            </a>{' '}
+            (open source)
+          </span>
         </p>
       </div>
     </div>
