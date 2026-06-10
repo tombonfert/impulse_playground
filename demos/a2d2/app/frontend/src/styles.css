@@ -980,6 +980,8 @@ table.stats td.num {
 .landing-cta {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 14px;
   margin: 0 0 24px;
 }
 .start-btn {
@@ -995,4 +997,135 @@ table.stats td.num {
 }
 .start-btn:hover {
   filter: brightness(1.1);
+}
+
+/* --- SQL warehouse config (gear button + overlay) --- */
+.gear-btn {
+  background: var(--panel2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.topbar .gear-btn {
+  margin-left: auto;
+}
+.topbar .err + .gear-btn {
+  margin-left: 8px;
+}
+.gear-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.config-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.config-panel {
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+.config-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.config-title {
+  font-weight: 700;
+  font-size: 15px;
+}
+.config-x {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.config-x:hover {
+  color: var(--text);
+}
+.config-label {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.config-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--panel2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: monospace;
+}
+.config-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.config-hint {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 8px 0 0;
+}
+.config-err {
+  color: #ff6b6b;
+  font-size: 12px;
+  margin-top: 10px;
+}
+.config-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+.config-cancel {
+  background: var(--panel2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.config-cancel:hover {
+  border-color: var(--accent);
+}
+.config-save {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.config-save:hover {
+  filter: brightness(1.1);
+}
+.config-save:disabled {
+  opacity: 0.6;
+  cursor: default;
 }

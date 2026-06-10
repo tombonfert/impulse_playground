@@ -49,6 +49,40 @@ async function getJSON<T>(url: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function postJSON<T>(url: string, body: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    // Surface the backend's detail message when present (e.g. validation errors).
+    let detail = `${res.status} ${res.statusText}`;
+    try {
+      const j = await res.json();
+      if (j && j.detail) detail = String(j.detail);
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+  return res.json() as Promise<T>;
+}
+
+// Runtime app configuration (the SQL warehouse the app queries).
+export interface AppConfig {
+  warehouse_id: string;
+  http_path: string;
+}
+
+export function fetchConfig(): Promise<AppConfig> {
+  return getJSON<AppConfig>('/api/config');
+}
+
+export function saveWarehouse(warehouseId: string): Promise<AppConfig> {
+  return postJSON<AppConfig>('/api/config', { warehouse_id: warehouseId });
+}
+
 export function fetchFilters(): Promise<Filters> {
   return getJSON<Filters>('/api/filters');
 }

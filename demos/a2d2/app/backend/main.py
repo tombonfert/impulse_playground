@@ -14,9 +14,10 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 from . import config
-from .db import query
+from .db import query, reconfigure_warehouse
 
 app = FastAPI(title="Impulse Event Explorer")
 
@@ -85,6 +86,32 @@ def _verify_table_exists() -> bool:
 @app.get("/api/health")
 def health():
     return {"status": "ok", "catalog": config.CATALOG, "schema": config.SCHEMA}
+
+
+class ConfigUpdate(BaseModel):
+    warehouse_id: str
+
+
+@app.get("/api/config")
+def get_config():
+    return {
+        "warehouse_id": config.get_warehouse_id(),
+        "http_path": config.WAREHOUSE_HTTP_PATH,
+    }
+
+
+@app.post("/api/config")
+def set_config(payload: ConfigUpdate):
+    wid = payload.warehouse_id.strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{16}", wid):
+        raise HTTPException(400, "warehouse_id must be 16 hexadecimal characters")
+    reconfigure_warehouse(wid)
+    # Drop caches that may be warehouse-specific so they re-probe the new target.
+    _verify_cache["ts"] = 0.0
+    return {
+        "warehouse_id": config.get_warehouse_id(),
+        "http_path": config.WAREHOUSE_HTTP_PATH,
+    }
 
 
 @app.get("/api/filters")

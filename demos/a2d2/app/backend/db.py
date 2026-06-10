@@ -54,6 +54,24 @@ def _get_conn():
         return _conn
 
 
+def reconfigure_warehouse(wid: str) -> None:
+    """Switch the app to a different SQL warehouse at runtime.
+
+    Updates the config source-of-truth and tears down the cached connection (under
+    the same lock _get_conn uses) so the next query() lazily rebuilds against the
+    new http_path.
+    """
+    global _conn
+    with _lock:
+        config.set_warehouse_id(wid)
+        if _conn is not None:
+            try:
+                _conn.close()
+            except Exception:
+                pass
+            _conn = None
+
+
 def query(sql: str, params: dict[str, Any] | None = None) -> list[dict]:
     """Run a parameterized query and return rows as dicts."""
     conn = _get_conn()

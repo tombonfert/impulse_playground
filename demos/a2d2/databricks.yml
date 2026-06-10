@@ -93,20 +93,13 @@ artifacts:
 
 resources:
   # ---------------------------------------------------------------------------
-  # Serverless SQL warehouse + Databricks App for the A2D2 Event Explorer.
+  # Databricks App for the A2D2 Event Explorer.
   # The app (demos/a2d2/app) is a FastAPI + React SPA that reads the silver
   # tables and streams MP4 clips. Its app.yaml references the warehouse via the
   # resource key `sql-warehouse` (valueFrom -> DATABRICKS_WAREHOUSE_ID).
+  # The app defaults to the shared dbdemos endpoint; the in-app config overlay
+  # lets a presenter switch warehouses at runtime.
   # ---------------------------------------------------------------------------
-  sql_warehouses:
-    a2d2_app_wh:
-      name: "[A2D2] event explorer warehouse"
-      warehouse_type: PRO
-      enable_serverless_compute: true
-      cluster_size: "2X-Small"
-      auto_stop_mins: 10
-      max_num_clusters: 1
-
   apps:
     impulse_explorer:
       name: impulse-event-explorer
@@ -115,7 +108,8 @@ resources:
       resources:
         - name: sql-warehouse
           sql_warehouse:
-            id: ${resources.sql_warehouses.a2d2_app_wh.id}
+            # dbdemos-shared-endpoint — the deployed default warehouse.
+            id: 862f1d757f0424f7
             permission: CAN_USE
 
   jobs:

@@ -3,6 +3,7 @@ import {
   EventRow,
   Filters,
   RoutePoint,
+  fetchConfig,
   fetchEvents,
   fetchFilters,
   fetchRoute,
@@ -12,6 +13,7 @@ import EventTable from './components/EventTable';
 import MapView from './components/MapView';
 import DetailPanel from './components/DetailPanel';
 import LandingPage from './components/LandingPage';
+import WarehouseConfig from './components/WarehouseConfig';
 
 const EMPTY: SelectedFilters = {
   vehicle: [],
@@ -33,6 +35,17 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventRow | null>(null);
   const [route, setRoute] = useState<RoutePoint[]>([]);
+  const [warehouseId, setWarehouseId] = useState('');
+  const [showConfig, setShowConfig] = useState(false);
+  // Bumped after a warehouse change to force filters + events to refetch.
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // Load the current warehouse id for the config overlay.
+  useEffect(() => {
+    fetchConfig()
+      .then((c) => setWarehouseId(c.warehouse_id))
+      .catch(() => undefined);
+  }, []);
 
   // Load filter options once.
   useEffect(() => {
@@ -42,7 +55,7 @@ export default function App() {
         setSelected((s) => ({ ...s, start_ts: f.min_ts, end_ts: f.max_ts }));
       })
       .catch((e) => setError(String(e)));
-  }, []);
+  }, [reloadKey]);
 
   // Refetch events whenever filters change.
   useEffect(() => {
@@ -68,7 +81,7 @@ export default function App() {
         setLoading(false);
         setFirstEventsLoaded(true);
       });
-  }, [selected]);
+  }, [selected, reloadKey]);
 
   // Load route for the selected event's drive.
   useEffect(() => {
@@ -89,18 +102,38 @@ export default function App() {
   // is shown. `prefetching` stays true until both have resolved.
   const prefetching = !filters || !firstEventsLoaded;
 
+  const onWarehouseSaved = (cfg: { warehouse_id: string }) => {
+    setWarehouseId(cfg.warehouse_id);
+    setShowConfig(false);
+    setError(null);
+    setReloadKey((k) => k + 1);
+  };
+
+  const configOverlay = showConfig && (
+    <WarehouseConfig
+      warehouseId={warehouseId}
+      onSaved={onWarehouseSaved}
+      onClose={() => setShowConfig(false)}
+    />
+  );
+
   if (view === 'landing') {
     return (
-      <LandingPage
-        filters={filters}
-        events={events}
-        prefetching={prefetching}
-        onStart={() => setView('explore')}
-      />
+      <>
+        <LandingPage
+          filters={filters}
+          events={events}
+          prefetching={prefetching}
+          onStart={() => setView('explore')}
+          onOpenConfig={() => setShowConfig(true)}
+        />
+        {configOverlay}
+      </>
     );
   }
 
   return (
+    <>
     <div className="app">
       <header className="topbar">
         <button
@@ -115,6 +148,14 @@ export default function App() {
           {loading ? 'loading…' : `${eventCount} events · ${clipCount} with clips`}
         </span>
         {error && <span className="err">{error}</span>}
+        <button
+          className="gear-btn"
+          onClick={() => setShowConfig(true)}
+          title="Configure SQL warehouse"
+          aria-label="Configure SQL warehouse"
+        >
+          ⚙
+        </button>
       </header>
       <div className="body">
         <FilterSidebar filters={filters} selected={selected} onChange={setSelected} />
@@ -136,5 +177,7 @@ export default function App() {
         </main>
       </div>
     </div>
+    {configOverlay}
+    </>
   );
 }

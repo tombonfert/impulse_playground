@@ -8,6 +8,7 @@ interface Props {
   events: EventRow[];
   prefetching: boolean;
   onStart: () => void;
+  onOpenConfig: () => void;
 }
 
 type Kpi = { value: string; label: string; expands?: boolean };
@@ -171,7 +172,7 @@ const TAKEAWAYS: { icon: string; title: string; bullets: { lead: string; text: s
   },
 ];
 
-export default function LandingPage({ onStart }: Props) {
+export default function LandingPage({ onStart, onOpenConfig }: Props) {
   const [active, setActive] = useState<string | null>(null);
   const [showEvents, setShowEvents] = useState(false);
   // Latches once the user opens any card, so the attention pulse stops for good.
@@ -192,6 +193,14 @@ export default function LandingPage({ onStart }: Props) {
     <div className="landing">
       <div className="landing-inner">
         <div className="landing-cta">
+          <button
+            className="gear-btn"
+            onClick={onOpenConfig}
+            title="Configure SQL warehouse"
+            aria-label="Configure SQL warehouse"
+          >
+            ⚙
+          </button>
           <button className="start-btn" onClick={onStart}>
             Let&apos;s Start
           </button>

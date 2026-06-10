@@ -17,11 +17,33 @@ VOLUME = os.environ.get("A2D2_VOLUME", "a2d2_raw")
 # --- SQL warehouse ---
 # Databricks Apps inject the resource as DATABRICKS_WAREHOUSE_ID (valueFrom) and
 # we also accept an explicit http_path. Either is enough to build the path.
-WAREHOUSE_ID = os.environ.get("DATABRICKS_WAREHOUSE_ID") or os.environ.get("A2D2_WAREHOUSE_ID", "")
+# When nothing is provided we fall back to the shared dbdemos endpoint so the app
+# always boots against a working warehouse; the in-app config overlay can swap it
+# at runtime (see set_warehouse_id / db.reconfigure_warehouse).
+DEFAULT_WAREHOUSE_ID = "862f1d757f0424f7"  # dbdemos-shared-endpoint
+WAREHOUSE_ID = (
+    os.environ.get("DATABRICKS_WAREHOUSE_ID")
+    or os.environ.get("A2D2_WAREHOUSE_ID")
+    or DEFAULT_WAREHOUSE_ID
+)
 _http_path = os.environ.get("A2D2_WAREHOUSE_HTTP_PATH", "")
 if not _http_path and WAREHOUSE_ID:
     _http_path = f"/sql/1.0/warehouses/{WAREHOUSE_ID}"
 WAREHOUSE_HTTP_PATH = _http_path
+
+
+def get_warehouse_id() -> str:
+    """Current SQL warehouse id (may have been changed at runtime)."""
+    return WAREHOUSE_ID
+
+
+def set_warehouse_id(wid: str) -> None:
+    """Point the app at a different SQL warehouse. Recomputes the http_path from
+    the id so the two never disagree. Caller is responsible for tearing down any
+    cached connection (see db.reconfigure_warehouse)."""
+    global WAREHOUSE_ID, WAREHOUSE_HTTP_PATH
+    WAREHOUSE_ID = wid
+    WAREHOUSE_HTTP_PATH = f"/sql/1.0/warehouses/{wid}"
 
 # Sub-folder inside the volume that holds the analysis MP4 clips.
 CLIPS_SUBDIR = "a2d2_analysis"
