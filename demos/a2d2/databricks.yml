@@ -5,7 +5,7 @@
 #   ( cd app/frontend && npm install && npm run build )      # build the React app first
 #   databricks bundle deploy  -t dev -p <your-profile>
 #   databricks bundle run a2d2_ingestion          -t dev -p <your-profile>  # 1) download + ingest (3 drives)
-#   databricks bundle run a2d2_object_detection   -t dev -p <your-profile>  # 2) detection + depth -> channels
+#   databricks bundle run a2d2_object_detection   -t dev -p <your-profile>  # 2) detection -> channels
 #   databricks bundle run a2d2_object_tracking    -t dev -p <your-profile>  # 3) ByteTrack tracking -> entity IDs
 #   databricks bundle run a2d2_analysis           -t dev -p <your-profile>  # 4) events + stats + MP4 clips
 #   databricks bundle run a2d2_event_verification -t dev -p <your-profile>  # 5) GenAI relevance verdicts
@@ -30,7 +30,7 @@ sync:
 variables:
   app_suffix:
     description: Suffix for the Databricks App name (use your username or initials to avoid conflicts).
-    default: dev
+    default: -dev
   catalog:
     description: Unity Catalog catalog for the silver tables and download volume.
     default: main
@@ -123,7 +123,7 @@ resources:
 
   apps:
     impulse_explorer:
-      name: a2d2-explorer-${var.app_suffix}
+      name: impulse-event-explorer${var.app_suffix}
       description: "Impulse Event Explorer — map + clips + channel stats + AI verdicts over the silver tables."
       source_code_path: ./app
       resources:
@@ -257,7 +257,7 @@ resources:
     # Object detection -> silver channels.
     # Runs detection and depth estimation; produces bounding boxes in the staging table.
     a2d2_object_detection:
-      name: "[A2D2] object detection + depth -> channels"
+      name: "[A2D2] object detection -> channels"
       tasks:
         - task_key: detect
           notebook_task:
