@@ -18,9 +18,10 @@ bus signals          channels + frames    perception channels     + GenAI verifi
 |------|----------------|--------------|---------|
 | 1. Ingest | [`a2d2_ingestion.ipynb`](./a2d2_ingestion.ipynb) | Downloads each drive's **bus-signals** + **front-camera** tars into a UC Volume; parses the **22 bus channels** into the Impulse silver tables; **untars all camera frames** (index-free, parallel) into per-drive subfolders and records them in `*_camera_frames`. One drive = one **container**, tagged with city + vehicle. | Serverless |
 | 2. Detect | [`a2d2_object_detection.ipynb`](./a2d2_object_detection.ipynb) | Runs a torchvision detector (**SSDlite**) + **Depth Anything V2** metric depth on sampled frames; writes **perception channels** (per-class counts, nearest-distance, and center-ahead / in-path variants) — channel ids `100–123`. | Classic **ML** cluster (DBR 17.3 LTS, `r5d`) |
-| 3. Analyze | [`a2d2_analysis.ipynb`](./a2d2_analysis.ipynb) | Mines **7 tail-calibrated safety events** (hard braking, pedestrian-in-path, close following, evasive maneuver, …) from the fused bus + perception channels using Impulse event logic; computes **per-event statistics**; exports a short **MP4 clip** per event. | Serverless |
-| 4. Verify | [`a2d2_event_verification.ipynb`](./a2d2_event_verification.ipynb) | **VLM-as-judge**: for each event, sends a few camera frames + telemetry to a **multimodal foundation model** with an event-specific rubric; stores a `{is_relevant, confidence, reason}` verdict in `*_event_verification_fact` to flag false positives. | Serverless (inference offloaded to the serving endpoint) |
-| 5. Explore | [`app/`](./app) | **Impulse Event Explorer** — a React + FastAPI **Databricks App** (served on a serverless SQL warehouse) showing events on a GPS map with the drive route, video clips, per-event stats, and the AI verdicts; filterable by city / vehicle / event / time and "verified only". | Databricks App + SQL warehouse |
+| 3. Track | [`a2d2_object_tracking.ipynb`](./a2d2_object_tracking.ipynb) | Applies **ByteTrack** to assign persistent track IDs across frames; each tracked object gets a globally unique **UUID** (`entity_id`) written to `*_tracking_fact`. | Serverless |
+| 4. Analyze | [`a2d2_analysis.ipynb`](./a2d2_analysis.ipynb) | Mines **7 tail-calibrated safety events** (hard braking, pedestrian-in-path, close following, evasive maneuver, …) from the fused bus + perception channels using Impulse event logic; computes **per-event statistics**; exports a short **MP4 clip** per event. | Serverless |
+| 5. Verify | [`a2d2_event_verification.ipynb`](./a2d2_event_verification.ipynb) | **VLM-as-judge**: for each event, sends a few camera frames + telemetry to a **multimodal foundation model** with an event-specific rubric; stores a `{is_relevant, confidence, reason}` verdict in `*_event_verification_fact` to flag false positives. | Serverless (inference offloaded to the serving endpoint) |
+| 6. Explore | [`app/`](./app) | **Impulse Event Explorer** — a React + FastAPI **Databricks App** (served on a serverless SQL warehouse) showing events on a GPS map with the drive route, video clips, per-event stats, and the AI verdicts; filterable by city / vehicle / event / time and "verified only". | Databricks App + SQL warehouse |
 
 ### Outputs (Unity Catalog)
 - **Silver** (Impulse model): `*_channels`, `*_channel_tags`, `*_channel_metrics`, `*_container_tags`,
@@ -61,14 +62,16 @@ committed with their outputs cleared.
 cd demos/a2d2
 
 # 1) Build the React app (FastAPI serves app/frontend/dist) and deploy the bundle.
+#    Use --var "app_suffix=<yourname>" to avoid app name conflicts with other developers.
 ( cd app/frontend && npm install && npm run build )
-databricks bundle deploy -t dev -p <profile>
+databricks bundle deploy -t dev -p <profile> --var "app_suffix=<yourname>"
 
 # 2) Run the pipeline jobs in order.
 databricks bundle run a2d2_ingestion          -t dev -p <profile>   # download + ingest (3 drives)
-databricks bundle run a2d2_object_detection    -t dev -p <profile>   # perception channels
-databricks bundle run a2d2_analysis            -t dev -p <profile>   # events + stats + MP4 clips
-databricks bundle run a2d2_event_verification  -t dev -p <profile>   # GenAI relevance verdicts
+databricks bundle run a2d2_object_detection   -t dev -p <profile>   # perception channels
+databricks bundle run a2d2_object_tracking    -t dev -p <profile>   # ByteTrack entity tracking
+databricks bundle run a2d2_analysis           -t dev -p <profile>   # events + stats + MP4 clips
+databricks bundle run a2d2_event_verification -t dev -p <profile>   # GenAI relevance verdicts
 
 # 3) (Re)deploy / restart the app.
 databricks bundle run impulse_explorer         -t dev -p <profile>
@@ -87,10 +90,12 @@ values (catalog, detector model, etc.); override any variable per run with
 
 | Variable | Default | Used by |
 |---|---|---|
+| `app_suffix` | `dev` | app (use your name/initials to avoid conflicts) |
 | `catalog`, `schema`, `table_prefix`, `volume` | `main` / `a2d2_demo` / `a2d2` / `a2d2_raw` | all |
 | `extract_partitions` | `64` | ingestion (parallel untar) |
 | `detect_model` / `depth_model` / `estimate_distance` | SSDlite / Depth-Anything-V2 / `true` | detection |
-| `frames_per_second` | `1` | detection (temporal subsampling) |
+| `frames_per_second` | `10` | detection (temporal subsampling) |
+| `track_thresh` / `match_thresh` / `track_buffer` | `0.5` / `0.8` / `30` | tracking (ByteTrack params) |
 | `ahead_center_frac` | `0.34` | detection (in-path band width) |
 | `clip_max_duration_s` / `clip_fps` / `clips_per_event` | `10` / `5` / `5` | analysis (clips) |
 | `verify_model` / `frames_per_event` / `verify_window_s` | `databricks-claude-opus-4-8` / `3` / `6` | verification |
