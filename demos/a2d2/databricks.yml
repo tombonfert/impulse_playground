@@ -3,12 +3,16 @@
 #
 #   cd demos/a2d2
 #   ( cd app/frontend && npm install && npm run build )      # build the React app first
+#   export BUNDLE_VAR_warehouse_id=<sql-warehouse-id>       # required (no default) — see README
 #   databricks bundle deploy  -t dev -p <your-profile>
 #   databricks bundle run a2d2_ingestion          -t dev -p <your-profile>  # 1) download + ingest (3 drives)
 #   databricks bundle run a2d2_object_detection   -t dev -p <your-profile>  # 2) detection + depth -> channels
 #   databricks bundle run a2d2_analysis           -t dev -p <your-profile>  # 3) events + stats + MP4 clips
 #   databricks bundle run a2d2_event_verification -t dev -p <your-profile>  # 4) GenAI relevance verdicts
 #   databricks bundle run impulse_explorer        -t dev -p <your-profile>  # 5) (re)deploy the app
+#
+# Workspace-specific values (host, warehouse id) are never committed: the host comes from the CLI
+# profile, the warehouse id from --var="warehouse_id=<id>" or BUNDLE_VAR_warehouse_id.
 #
 # Detection runs on a classic ML cluster (defined below); the other jobs are serverless.
 # The impulse package is built from the repo root (../..) into ./dist as a wheel and installed on the
@@ -86,8 +90,8 @@ variables:
     default: "0"
   warehouse_id:
     description: SQL warehouse the Event Explorer app queries (granted CAN_USE to the app SP).
-    # impulse-event-explorer — dedicated serverless warehouse (e2-demo-field-eng).
-    default: 3385f3f66e76210c
+    # REQUIRED, no default — workspace-specific IDs are kept out of this (public) repo. Pass it on
+    # every bundle command: --var="warehouse_id=<id>" or export BUNDLE_VAR_warehouse_id=<id>.
 
 artifacts:
   impulse_wheel:
@@ -271,8 +275,8 @@ resources:
             node_type_id: r5d.2xlarge
             num_workers: 4          # 4 x r5d.2xlarge (8 cores) = 32 worker cores
             data_security_mode: SINGLE_USER
-            # UC-only mode: skip the legacy Hive metastore entirely. Some workspaces (e.g. the
-            # fevm test workspace) can't reach the HMS RDS on :3306, so REPL startup fails with
+            # UC-only mode: skip the legacy Hive metastore entirely. Some workspaces can't
+            # reach the legacy HMS on :3306, so REPL startup fails with
             # "Hive metastore initialization failed". The pipeline only touches UC, so this is
             # safe everywhere. Requires an initial catalog since hive_metastore is gone.
             spark_conf:
@@ -304,18 +308,16 @@ targets:
       estimate_distance: "true"
       frames_per_second: "1"
 
-  # FEVM test workspace (AWS eu-central-1). Same pipeline settings as dev, different catalog +
-  # warehouse. The app's env is overridden here (config.env replaces app.yaml's env block, which
-  # stays pinned to mda_demo for the e2 deployment), so the full env list must be repeated.
+  # Test workspace. Same pipeline settings as dev, different catalog. The workspace comes from the
+  # CLI profile (-p) and the warehouse from --var — neither is pinned here (public repo). The app's
+  # env is overridden (config.env replaces app.yaml's env block, which stays pinned to mda_demo for
+  # dev), so the full env list must be repeated.
   #
-  #   databricks bundle deploy -t impulse_testing -p fevm-impulse-testing
+  #   databricks bundle deploy -t impulse_testing -p <profile> --var="warehouse_id=<id>"
   impulse_testing:
     mode: development
-    workspace:
-      host: https://fevm-impulse-testing.cloud.databricks.com
     variables:
       catalog: impulse_testing_catalog
-      warehouse_id: f4ebf8de5a061893   # Serverless Starter Warehouse
       detect_model: ssdlite320_mobilenet_v3_large
       estimate_distance: "true"
       frames_per_second: "1"

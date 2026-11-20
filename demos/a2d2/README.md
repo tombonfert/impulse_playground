@@ -60,6 +60,9 @@ committed with their outputs cleared.
 ```bash
 cd demos/a2d2
 
+# 0) Required: the SQL warehouse the app queries (no default in databricks.yml — see below).
+export BUNDLE_VAR_warehouse_id=<sql-warehouse-id>
+
 # 1) Build the React app (FastAPI serves app/frontend/dist) and deploy the bundle.
 ( cd app/frontend && npm install && npm run build )
 databricks bundle deploy -t dev -p <profile>
@@ -79,6 +82,30 @@ The `impulse` wheel is built from the repo root into `./dist` and installed on t
 values (catalog, detector model, etc.); override any variable per run with
 `--var="catalog=my_cat,frames_per_second=2,…"`.
 
+### Workspace-specific values are passed at deploy time
+
+This repo is public, so `databricks.yml` contains **no workspace URLs or warehouse IDs**:
+
+- **Workspace** — taken from the CLI profile you pass with `-p <profile>` (no `workspace.host` is
+  pinned in any target, so make sure the profile points at the workspace you intend).
+- **SQL warehouse** — the `warehouse_id` variable has no default and is **required** on every
+  `bundle deploy` / `bundle run` / `bundle validate`. Either pass it inline or export it once per
+  shell:
+
+  ```bash
+  databricks bundle deploy -t <target> -p <profile> --var="warehouse_id=<sql-warehouse-id>"
+  # or
+  export BUNDLE_VAR_warehouse_id=<sql-warehouse-id>
+  ```
+
+  Find the ID with `databricks warehouses list -p <profile>`. The bundle grants the app's service
+  principal `CAN_USE` on it.
+
+| Target | Catalog | Notes |
+|---|---|---|
+| `dev` (default) | `mda_demo` | app env comes from `app/app.yaml` |
+| `impulse_testing` | `impulse_testing_catalog` | app env overridden in the target (`config.env`) |
+
 > **App service principal:** a Databricks App runs as its own service principal. After first deploy,
 > grant it `USE CATALOG`/`USE SCHEMA` + `SELECT` on the schema and `READ VOLUME` on the volume so it
 > can read the tables and stream clips (the warehouse `CAN_USE` grant comes from the bundle).
@@ -87,6 +114,7 @@ values (catalog, detector model, etc.); override any variable per run with
 
 | Variable | Default | Used by |
 |---|---|---|
+| `warehouse_id` | **none — required** (`--var` / `BUNDLE_VAR_warehouse_id`) | app |
 | `catalog`, `schema`, `table_prefix`, `volume` | `main` / `a2d2_demo` / `a2d2` / `a2d2_raw` | all |
 | `extract_partitions` | `64` | ingestion (parallel untar) |
 | `detect_model` / `depth_model` / `estimate_distance` | SSDlite / Depth-Anything-V2 / `true` | detection |
