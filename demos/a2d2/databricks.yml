@@ -84,6 +84,10 @@ variables:
   verify_limit:
     description: Verify at most N events (0 = all; >0 for smoke tests).
     default: "0"
+  warehouse_id:
+    description: SQL warehouse the Event Explorer app queries (granted CAN_USE to the app SP).
+    # impulse-event-explorer — dedicated serverless warehouse (e2-demo-field-eng).
+    default: 3385f3f66e76210c
 
 artifacts:
   impulse_wheel:
@@ -108,8 +112,8 @@ resources:
       resources:
         - name: sql-warehouse
           sql_warehouse:
-            # dbdemos-shared-endpoint — the deployed default warehouse.
-            id: 862f1d757f0424f7
+            # Per-target via ${var.warehouse_id} (default: impulse-event-explorer on e2-demo-field-eng).
+            id: ${var.warehouse_id}
             permission: CAN_USE
 
   jobs:
@@ -267,13 +271,22 @@ resources:
             node_type_id: r5d.2xlarge
             num_workers: 4          # 4 x r5d.2xlarge (8 cores) = 32 worker cores
             data_security_mode: SINGLE_USER
+            # UC-only mode: skip the legacy Hive metastore entirely. Some workspaces (e.g. the
+            # fevm test workspace) can't reach the HMS RDS on :3306, so REPL startup fails with
+            # "Hive metastore initialization failed". The pipeline only touches UC, so this is
+            # safe everywhere. Requires an initial catalog since hive_metastore is gone.
+            spark_conf:
+              spark.databricks.unityCatalogOnlyMode: "true"
+              spark.databricks.sql.initial.catalog.namespace: ${var.catalog}
             # On-demand workers (no spot) to avoid preemption mid-inference.
             aws_attributes:
               availability: ON_DEMAND
             # Persist driver/executor logs so failures are diagnosable after the cluster ends.
+            # UC volume (not dbfs:/) — public DBFS root is disabled on newer workspaces. The
+            # volume is created by the ingestion job, which must run first anyway.
             cluster_log_conf:
-              dbfs:
-                destination: dbfs:/cluster-logs/a2d2-detect
+              volumes:
+                destination: /Volumes/${var.catalog}/${var.schema}/${var.volume}/cluster-logs/a2d2-detect
           libraries:
             - whl: ./dist/databricks_impulse-*.whl
 
@@ -290,3 +303,35 @@ targets:
       detect_model: ssdlite320_mobilenet_v3_large
       estimate_distance: "true"
       frames_per_second: "1"
+
+  # FEVM test workspace (AWS eu-central-1). Same pipeline settings as dev, different catalog +
+  # warehouse. The app's env is overridden here (config.env replaces app.yaml's env block, which
+  # stays pinned to mda_demo for the e2 deployment), so the full env list must be repeated.
+  #
+  #   databricks bundle deploy -t impulse_testing -p fevm-impulse-testing
+  impulse_testing:
+    mode: development
+    workspace:
+      host: https://fevm-impulse-testing.cloud.databricks.com
+    variables:
+      catalog: impulse_testing_catalog
+      warehouse_id: f4ebf8de5a061893   # Serverless Starter Warehouse
+      detect_model: ssdlite320_mobilenet_v3_large
+      estimate_distance: "true"
+      frames_per_second: "1"
+    resources:
+      apps:
+        impulse_explorer:
+          config:
+            command: ['uvicorn', 'backend.main:app', '--host', '0.0.0.0', '--port', '8000']
+            env:
+              - name: DATABRICKS_WAREHOUSE_ID
+                value_from: sql-warehouse
+              - name: A2D2_CATALOG
+                value: ${var.catalog}
+              - name: A2D2_SCHEMA
+                value: ${var.schema}
+              - name: A2D2_TABLE_PREFIX
+                value: ${var.table_prefix}
+              - name: A2D2_VOLUME
+                value: ${var.volume}
