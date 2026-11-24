@@ -84,6 +84,9 @@ variables:
   verify_limit:
     description: Verify at most N events (0 = all; >0 for smoke tests).
     default: "0"
+  warehouse_id:
+    description: SQL warehouse the Event Explorer app queries (needs CAN_MANAGE to grant the app CAN_USE).
+    default: 862f1d757f0424f7   # dbdemos-shared-endpoint
 
 artifacts:
   impulse_wheel:
@@ -108,8 +111,7 @@ resources:
       resources:
         - name: sql-warehouse
           sql_warehouse:
-            # dbdemos-shared-endpoint — the deployed default warehouse.
-            id: 862f1d757f0424f7
+            id: ${var.warehouse_id}
             permission: CAN_USE
 
   jobs:
@@ -287,6 +289,8 @@ targets:
     # with --var if needed.
     variables:
       catalog: mda_demo
+      # e2-demo-field-eng: dedicated 2X-Small serverless warehouse "impulse-event-explorer" (auto-stop 10 min)
+      warehouse_id: 23ad26b49459aa91
       detect_model: ssdlite320_mobilenet_v3_large
       estimate_distance: "true"
       frames_per_second: "1"

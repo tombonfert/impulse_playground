@@ -20,7 +20,33 @@ bus signals          channels + frames    perception channels     + GenAI verifi
 | 2. Detect | [`a2d2_object_detection.ipynb`](./a2d2_object_detection.ipynb) | Runs a torchvision detector (**SSDlite**) + **Depth Anything V2** metric depth on sampled frames; writes **perception channels** (per-class counts, nearest-distance, and center-ahead / in-path variants) — channel ids `100–123`. | Classic **ML** cluster (DBR 17.3 LTS, `r5d`) |
 | 3. Analyze | [`a2d2_analysis.ipynb`](./a2d2_analysis.ipynb) | Mines **7 tail-calibrated safety events** (hard braking, pedestrian-in-path, close following, evasive maneuver, …) from the fused bus + perception channels using Impulse event logic; computes **per-event statistics**; exports a short **MP4 clip** per event. | Serverless |
 | 4. Verify | [`a2d2_event_verification.ipynb`](./a2d2_event_verification.ipynb) | **VLM-as-judge**: for each event, sends a few camera frames + telemetry to a **multimodal foundation model** with an event-specific rubric; stores a `{is_relevant, confidence, reason}` verdict in `*_event_verification_fact` to flag false positives. | Serverless (inference offloaded to the serving endpoint) |
-| 5. Explore | [`app/`](./app) | **Impulse Event Explorer** — a React + FastAPI **Databricks App** (served on a serverless SQL warehouse) showing events on a GPS map with the drive route, video clips, per-event stats, and the AI verdicts; filterable by city / vehicle / event / time and "verified only". | Databricks App + SQL warehouse |
+| 5. Explore | [`app/`](./app) | **Impulse Event Explorer** — a React + FastAPI **Databricks App** (served on a serverless SQL warehouse) showing events on a GPS map with the drive route, video clips, per-event stats, and the AI verdicts; filterable by city / vehicle / event / time and "verified only". Every event opens an **event deep dive** (see below). | Databricks App + SQL warehouse |
+
+### Event deep dive (app)
+
+Each event has a detail page with **event-specific reporting**. The definitions live in
+[`app/backend/reports.py`](./app/backend/reports.py), and panels or KPIs whose channels a deployment lacks are hidden:
+
+| Event | Panels | Key figures (click → jump to that moment) |
+|---|---|---|
+| `emergency_braking` | braking, speed, lead vehicle | peak deceleration, max brake pressure, speed at start, speed change, lead distance at peak decel. |
+| `sharp_cornering` | steering & lateral dynamics, speed | max steering, max lateral accel., speed at max steering, max yaw rate |
+| `evasive_maneuver` | braking, steering, lead vehicle, pedestrians | peak deceleration, max steering, speed at start / at max steering |
+| `pedestrian_near_miss` / `pedestrian_in_path` | pedestrian distance (all / in path), detections, speed or braking | closest pedestrian, speed at closest approach, detections, braking |
+| `cyclist_close_encounter` | cyclist distance + detections, speed, steering | closest cyclist, speed and steering at the closest pass |
+| `imminent_rear_end` | lead vehicle distance + **time headway** (distance ÷ speed), detections, speed, braking | min headway, lead distance and speed at min headway, max brake |
+| `vru_brake_reaction` | pedestrian + cyclist distance, braking | closest pedestrian / cyclist, peak deceleration, max brake |
+
+Every report also shows the **vehicle context** (speed & accelerator, braking, steering) and the drive's other events as
+markers. It adds the MP4 clip, or the **nearest camera frame** for events without a clip, a **mini map** with the car's
+position, the AI verdict, and the Impulse within-event statistics.
+
+All views share **one playhead**:
+- **Moving the playhead:** hover a chart to scrub the video (paused while the clip plays), click to seek, drag the timeline,
+  or press ←/→ (±0.1 s; Shift = ±1 s).
+- **Zoom:** drag in a chart (more than 6 px) to zoom all panels.
+- **From the video:** playing or scrubbing the clip moves the playhead through every panel.
+- **Start position:** the page opens at the event's key moment, e.g. the instant of peak deceleration.
 
 ### Outputs (Unity Catalog)
 - **Silver** (Impulse model): `*_channels`, `*_channel_tags`, `*_channel_metrics`, `*_container_tags`,
@@ -53,7 +79,7 @@ committed with their outputs cleared.
 - **Internet egress to AWS S3** (`eu-central-1`) to fetch the source tars.
 - Volume free space for the **full camera archives** of the drives you ingest (tens to a few hundred
   GB — these download and untar **all** frames, not a sampled subset).
-- To build the app: **Node 18+** (`npm`) for the React frontend.
+- To build the app: **Node 18+** (`npm`) for the React frontend (`app/frontend/package.json` is in the repo).
 
 ## How to run (Databricks Asset Bundle)
 

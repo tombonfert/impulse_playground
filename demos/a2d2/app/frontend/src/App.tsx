@@ -12,6 +12,7 @@ import FilterSidebar, { SelectedFilters } from './components/FilterSidebar';
 import EventTable from './components/EventTable';
 import MapView from './components/MapView';
 import DetailPanel from './components/DetailPanel';
+import DeepDive from './components/DeepDive';
 import LandingPage from './components/LandingPage';
 import WarehouseConfig from './components/WarehouseConfig';
 
@@ -26,7 +27,7 @@ const EMPTY: SelectedFilters = {
 };
 
 export default function App() {
-  const [view, setView] = useState<'landing' | 'explore'>('landing');
+  const [view, setView] = useState<'landing' | 'explore' | 'deepdive'>('landing');
   const [filters, setFilters] = useState<Filters | null>(null);
   const [selected, setSelected] = useState<SelectedFilters>(EMPTY);
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -132,6 +133,17 @@ export default function App() {
     );
   }
 
+  if (view === 'deepdive' && selectedEvent) {
+    return (
+      <>
+        <div className="app">
+          <DeepDive event={selectedEvent} onBack={() => setView('explore')} />
+        </div>
+        {configOverlay}
+      </>
+    );
+  }
+
   return (
     <>
     <div className="app">
@@ -172,7 +184,7 @@ export default function App() {
               selected={selectedEvent}
               onSelect={setSelectedEvent}
             />
-            <DetailPanel event={selectedEvent} />
+            <DetailPanel event={selectedEvent} onOpenDeepDive={() => setView('deepdive')} />
           </div>
         </main>
       </div>

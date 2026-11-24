@@ -3,6 +3,7 @@ import { EventRow, StatRow, clipUrl, cssColor, fetchStats, fmtTs } from '../api'
 
 interface Props {
   event: EventRow | null;
+  onOpenDeepDive: () => void;
 }
 
 // Pick the numeric aggregation column to chart: prefer mean, else first numeric.
@@ -18,7 +19,7 @@ function pickMetric(rows: StatRow[]): string | null {
   return keys.size ? Array.from(keys)[0] : null;
 }
 
-export default function DetailPanel({ event }: Props) {
+export default function DetailPanel({ event, onOpenDeepDive }: Props) {
   const [stats, setStats] = useState<StatRow[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -68,6 +69,8 @@ export default function DetailPanel({ event }: Props) {
         <span className="dot" style={{ background: cssColor(event.event_name) }} />
         <small>{event.event_type}</small>
       </h3>
+
+      <button className="primary-btn" onClick={onOpenDeepDive}>Open event deep dive ⤢</button>
 
       <div className="meta">
         <div>

@@ -3,7 +3,12 @@
 # The ingestion notebook downloads it at runtime into your own workspace.
 data/
 *.tar
+# Data / derived JSON only — NOT the frontend build config (package.json, tsconfig*.json).
 *.json
+!app/frontend/package.json
+!app/frontend/package-lock.json
+!app/frontend/tsconfig.json
+!app/frontend/tsconfig.node.json
 **/*.png
 **/*.mp4
 # DABs build artifacts (the impulse wheel lives in demos/a2d2/dist/)
@@ -14,4 +19,6 @@ data/
 !app/frontend/dist/**
 # Never commit node_modules / python venv.
 app/frontend/node_modules/
+app/frontend/*.tsbuildinfo
+__pycache__/
 app/.venv/

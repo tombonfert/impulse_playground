@@ -9,11 +9,13 @@ export interface Filters {
   max_ts: number | null;
 }
 
+// container_id / event_instance_id are transported as strings (64-bit ids exceed JS's 2^53 precision).
 export interface EventRow {
-  container_id: number;
-  event_instance_id: number;
+  container_id: string;
+  event_instance_id: string;
   event_name: string;
   event_type: string;
+  event_description: string | null;
   city: string | null;
   vehicle: string | null;
   start_ts: number | null;
@@ -103,11 +105,11 @@ export function fetchEvents(q: EventQuery): Promise<EventRow[]> {
   return getJSON<EventRow[]>(`/api/events${qs ? `?${qs}` : ''}`);
 }
 
-export function fetchStats(cid: number, eiid: number): Promise<StatRow[]> {
+export function fetchStats(cid: string, eiid: string): Promise<StatRow[]> {
   return getJSON<StatRow[]>(`/api/events/${cid}/${eiid}/stats`);
 }
 
-export function fetchRoute(cid: number): Promise<RoutePoint[]> {
+export function fetchRoute(cid: string): Promise<RoutePoint[]> {
   return getJSON<RoutePoint[]>(`/api/route/${cid}`);
 }
 
@@ -115,6 +117,82 @@ export function clipUrl(ev: EventRow): string {
   return `/api/events/${ev.container_id}/${ev.event_instance_id}/clip?event_name=${encodeURIComponent(
     ev.event_name,
   )}`;
+}
+
+// ---- Event deep dive -----------------------------------------------------------
+export interface TSChannelDef {
+  name: string;
+  label: string;
+  axis?: 'right';
+  scale?: number;
+}
+export interface TSGroup {
+  id: string;
+  title: string;
+  column?: 'event' | 'context' | 'custom';
+  channels: TSChannelDef[];
+}
+export interface KpiDef {
+  label: string;
+  channel: string;
+  // min | max | max_abs | mean | first | last | delta | range | at_min_of:<ch> | at_max_of:<ch>
+  agg: string;
+  unit: string;
+  help: string;
+  digits: number;
+}
+export interface EventReport {
+  event_name: string;
+  event_description: string | null;
+  summary: string;
+  panels: TSGroup[];
+  kpis: KpiDef[];
+  focus: number | null;
+}
+export interface TSSeries {
+  name: string;
+  unit: string;
+  t: number[]; // epoch seconds
+  v: (number | null)[];
+}
+export interface TSResponse {
+  channels: TSSeries[];
+  start_s: number;
+  end_s: number;
+}
+export interface EventMarker {
+  event_name: string;
+  event_instance_id: string;
+  start_s: number;
+  end_s: number;
+}
+export interface Markers {
+  recording: { start_s: number | null; end_s: number | null };
+  instances: EventMarker[];
+}
+export interface ChannelInfo {
+  channel_name: string;
+  unit: string | null;
+  sample_count: number | null;
+  min: number | null;
+  max: number | null;
+}
+
+export function fetchReport(cid: string, eiid: string): Promise<EventReport> {
+  return getJSON<EventReport>(`/api/events/${cid}/${eiid}/report`);
+}
+export function fetchTimeseries(cid: string, channels: string[], startS: number, endS: number): Promise<TSResponse> {
+  const p = new URLSearchParams({ channels: channels.join(','), start_s: String(startS), end_s: String(endS) });
+  return getJSON<TSResponse>(`/api/containers/${cid}/timeseries?${p.toString()}`);
+}
+export function fetchMarkers(cid: string): Promise<Markers> {
+  return getJSON<Markers>(`/api/containers/${cid}/markers`);
+}
+export function searchChannels(cid: string, q: string): Promise<ChannelInfo[]> {
+  return getJSON<ChannelInfo[]>(`/api/containers/${cid}/channels?q=${encodeURIComponent(q)}`);
+}
+export function frameUrl(cid: string, epochS: number): string {
+  return `/api/containers/${cid}/frame?t=${epochS.toFixed(2)}`;
 }
 
 // Deterministic categorical palette (RGB triples for deck.gl).
